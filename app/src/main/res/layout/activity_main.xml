@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="eu.zerovector.grabble.MainActivity"
+    android:fitsSystemWindows="true">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/mainmenu_background"
+        android:id="@+id/backgroundImage"
+        android:scaleType="centerCrop" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <EditText
+            android:layout_height="30dp"
+            android:ems="10"
+            android:id="@+id/tbEmail"
+            android:inputType="textEmailAddress"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_below="@+id/gameLogo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:hint="Email"
+            android:textColorHint="@color/common_action_bar_splitter" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/grabblelogo_cropped"
+            android:id="@+id/gameLogo"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:paddingTop="10dp"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            android:paddingBottom="10dp" />
+
+
+        <EditText
+            android:layout_height="30dp"
+            android:ems="10"
+            android:id="@+id/tbPass"
+            android:inputType="textPassword"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="16dp"
+            android:layout_below="@+id/tbEmail"
+            android:layout_centerHorizontal="true"
+            android:hint="Password"
+            android:textColorHint="@color/common_action_bar_splitter" />
+
+        <EditText
+            android:layout_height="30dp"
+            android:ems="10"
+            android:id="@+id/tbConfirmPass"
+            android:inputType="textPassword"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="16dp"
+            android:layout_below="@+id/tbPass"
+            android:layout_centerHorizontal="true"
+            android:hint="Confirm Password"
+            android:textColorHint="@color/common_action_bar_splitter"
+            android:tag="MM_REGISTRATION" />
+
+        <EditText
+            android:layout_height="30dp"
+            android:ems="10"
+            android:id="@+id/tbUsername"
+            android:inputType="textCapSentences"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="16dp"
+            android:layout_below="@+id/tbConfirmPass"
+            android:layout_centerHorizontal="true"
+            android:hint="Username"
+            android:textColorHint="@color/common_action_bar_splitter"
+            android:tag="MM_REGISTRATION" />
+
+        <EditText
+            android:layout_height="30dp"
+            android:ems="10"
+            android:id="@+id/tbFactionName"
+            android:inputType="textCapWords"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="74dp"
+            android:layout_marginTop="16dp"
+            android:layout_below="@+id/tbUsername"
+            android:hint="Faction name"
+            android:textColorHint="@color/common_action_bar_splitter"
+            android:tag="MM_REGISTRATION" />
+
+
+        <Button
+            android:text="⚄"
+            android:layout_height="30dp"
+            android:id="@+id/btnRandomiseFactionName"
+            android:background="@color/grey_semitransparent"
+            android:textSize="22sp"
+            android:textColor="@android:color/background_light"
+            android:elevation="0dp"
+            android:onClick="btnLogin_click"
+            android:layout_width="30dp"
+            android:layout_marginRight="0dp"
+            android:layout_alignTop="@+id/tbFactionName"
+            android:layout_alignBottom="@+id/tbFactionName"
+            android:layout_alignEnd="@+id/tbUsername"
+            android:tag="MM_REGISTRATION" />
+
+        <TextView
+            android:text="TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tbFactionName"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:id="@+id/lblAlignment"
+            tools:text="@string/lblAlignment"
+            android:textSize="18sp"
+            tools:textColor="@color/common_google_signin_btn_text_dark_default"
+            android:tag="MM_REGISTRATION"
+            android:textColor="@color/common_google_signin_btn_text_dark_default" />
+
+        <Space
+            android:layout_width="24dp"
+            android:layout_height="76dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/lblAlignment"
+            android:layout_marginTop="8dp"
+            android:id="@+id/spcAlignments" />
+
+        <ImageButton
+            app:srcCompat="@drawable/closers"
+            android:id="@+id/btnClosers"
+            android:background="@color/grey_semitransparent"
+            android:scaleType="fitCenter"
+            android:layout_height="76dp"
+            android:layout_width="76dp"
+            android:layout_marginStart="-44dp"
+            android:layout_below="@+id/lblAlignment"
+            android:layout_marginTop="8dp"
+            android:layout_toLeftOf="@+id/spcAlignments"
+            android:onClick="btnClosers_click"
+            android:tag="MM_REGISTRATION" />
+
+        <ImageButton
+            app:srcCompat="@drawable/openers"
+            android:id="@+id/btnOpeners"
+            android:background="@color/grey_dark_semitransparent"
+            android:scaleType="fitCenter"
+            android:layout_height="76dp"
+            android:layout_width="76dp"
+            android:layout_below="@+id/lblAlignment"
+            android:layout_marginTop="8dp"
+            android:layout_toRightOf="@+id/spcAlignments"
+            android:onClick="btnOpeners_click"
+            android:tag="MM_REGISTRATION" />
+
+        <Button
+            android:text="Login"
+            android:layout_height="30dp"
+            android:id="@+id/btnLogin"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="150dp"
+            android:textSize="18sp"
+            android:textColor="@android:color/background_light"
+            android:elevation="0dp"
+            android:onClick="btnLogin_click"
+            android:layout_alignBottom="@+id/tbConfirmPass"
+            android:layout_centerHorizontal="true"
+            android:tag="MM_LOGIN" />
+
+        <Button
+            android:text="Register"
+            android:layout_height="30dp"
+            android:id="@+id/btnRegister"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="150dp"
+            android:textSize="18sp"
+            android:textColor="@android:color/background_light"
+            android:elevation="0dp"
+            android:onClick="btnRegister_click"
+            android:layout_alignBottom="@+id/tbUsername"
+            android:layout_centerHorizontal="true"
+            android:tag="MM_LOGIN" />
+
+        <Button
+            android:text="Register"
+            android:layout_height="30dp"
+            android:id="@+id/btnConfirmRegister"
+            android:background="@color/grey_semitransparent"
+            android:layout_width="150dp"
+            android:textSize="18sp"
+            android:textColor="@android:color/background_light"
+            android:elevation="0dp"
+            android:onClick="btnConfirmRegister_click"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/spcAlignments"
+            android:layout_marginTop="30dp"
+            android:tag="MM_REGISTRATION" />
+
+
+    </RelativeLayout>
+
+</android.support.design.widget.CoordinatorLayout>
