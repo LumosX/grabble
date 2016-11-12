@@ -1,6 +1,7 @@
 package eu.zerovector.grabble;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,8 @@ import java.util.List;
 
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
+
+import static android.R.attr.value;
 
 
 // Use the Calligraphy library for custom font support.
@@ -60,15 +63,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Also override the "back" button when we need it
-    //@Override
-    //public void onBackPressed() {
-    //    MM_setPage(false); // Return to the "login" "page" if registering
-    //}
+    @Override
+    public void onBackPressed() {
+        MM_setPage(false); // Return to the "login" "page" if registering
+    }
 
 
     // Functions
     public void btnLogin_click(View v) {
         // TODO: LOG IN, SHOW GAME
+        if (Network.Login()) {
+            Intent myIntent = new Intent(this, GameActivity.class);
+            myIntent.putExtra("key", value); //Optional parameters
+            this.startActivity(myIntent);
+        }
     }
 
     public void btnRegister_click(View v) {

@@ -10,10 +10,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-<<<<<<< HEAD
             <option value="$PROJECT_DIR$/calligraphy-2.2.0" />
-=======
->>>>>>> 93c665ffa5f1b073870bbcb6599e541047c23b16
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

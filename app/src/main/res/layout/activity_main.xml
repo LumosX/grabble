@@ -8,8 +8,8 @@
     android:fitsSystemWindows="true">
 
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:srcCompat="@drawable/mainmenu_background"
         android:id="@+id/backgroundImage"
         android:scaleType="centerCrop" />
@@ -34,7 +34,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="16dp"
             android:hint="Email"
-            android:textColorHint="@color/common_action_bar_splitter" />
+            android:textColorHint="@color/hint_colour" />
 
         <ImageView
             android:layout_width="match_parent"
@@ -65,7 +65,7 @@
             android:layout_below="@+id/tbEmail"
             android:layout_centerHorizontal="true"
             android:hint="Password"
-            android:textColorHint="@color/common_action_bar_splitter" />
+            android:textColorHint="@color/hint_colour" />
 
         <EditText
             android:layout_height="30dp"
@@ -83,7 +83,7 @@
             android:layout_below="@+id/tbPass"
             android:layout_centerHorizontal="true"
             android:hint="Confirm Password"
-            android:textColorHint="@color/common_action_bar_splitter"
+            android:textColorHint="@color/hint_colour"
             android:tag="MM_REGISTRATION" />
 
         <EditText
@@ -102,7 +102,7 @@
             android:layout_below="@+id/tbConfirmPass"
             android:layout_centerHorizontal="true"
             android:hint="Username"
-            android:textColorHint="@color/common_action_bar_splitter"
+            android:textColorHint="@color/hint_colour"
             android:tag="MM_REGISTRATION" />
 
         <EditText
@@ -120,7 +120,7 @@
             android:layout_marginTop="16dp"
             android:layout_below="@+id/tbUsername"
             android:hint="Faction name"
-            android:textColorHint="@color/common_action_bar_splitter"
+            android:textColorHint="@color/hint_colour"
             android:tag="MM_REGISTRATION" />
 
 
@@ -150,10 +150,10 @@
             android:id="@+id/lblAlignment"
             tools:text="@string/lblAlignment"
             android:textSize="18sp"
-            tools:textColor="@color/common_google_signin_btn_text_dark_default"
             android:tag="MM_REGISTRATION"
-            android:textColor="@color/common_google_signin_btn_text_dark_default" />
+            android:textColor="@color/White" />
 
+        <!-- This is quite contrived, you know that? -->
         <Space
             android:layout_width="24dp"
             android:layout_height="76dp"
