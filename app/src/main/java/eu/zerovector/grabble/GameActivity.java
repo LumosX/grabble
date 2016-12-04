@@ -31,6 +31,10 @@ public class GameActivity extends FragmentActivity {
         // Do everything else
         setContentView(R.layout.activity_game);
 
+        // Also don't forget to set the actual game up
+
+
+
         ViewPager pager = (ViewPager)findViewById(R.id.viewPager);
         pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
         pager.setCurrentItem(1); // Set the page to the city map
@@ -42,8 +46,11 @@ public class GameActivity extends FragmentActivity {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
     }
 
-    private class MyPagerAdapter extends FragmentPagerAdapter {
 
+
+
+    // Pager adapter implementation
+    private class MyPagerAdapter extends FragmentPagerAdapter {
         public MyPagerAdapter(FragmentManager fm) {
             super(fm);
         }
