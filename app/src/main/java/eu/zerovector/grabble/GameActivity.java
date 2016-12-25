@@ -59,7 +59,7 @@ public class GameActivity extends FragmentActivity {
         public Fragment getItem(int pos) {
             switch(pos) {
                 case 0: return CollectionScreen.newInstance("a","B");
-                case 1: return CityMap.newInstance("a","B");
+                case 1: return CityMap.newInstance();
                 default: return FactionScreen.newInstance("a","B");
             }
         }

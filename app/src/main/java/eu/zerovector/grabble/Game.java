@@ -1,9 +1,10 @@
 package eu.zerovector.grabble;
 
 import android.content.Context;
-import android.widget.Toast;
 
 import com.arasthel.asyncjob.AsyncJob;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -18,6 +19,8 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -49,6 +52,14 @@ public final class Game {
     }
 
 
+
+    private static LatLngBounds mapBounds; // The bounds of the map.
+    public static LatLngBounds getMapBounds() {
+        if (!isMapLoaded) return null;
+        else return mapBounds;
+    }
+
+
     // Grabble dict stuff
     private static final int DICT_RES_NAME = R.raw.grabbledict;
     private static GrabbleDict grabbleDict = new GrabbleDict();
@@ -58,12 +69,26 @@ public final class Game {
         // dict is loaded, return the total maximum size of the dictionary (including duplicates)
         else return 23869;
     }
+    public static GrabbleDict getGameDictionary() {
+        if (!isDictLoaded) return null;
+        else return grabbleDict;
+    }
 
     // Daily map stuff
     private static List<Placemark> dailyMap = new ArrayList<>();
     // HARDCODED VARIABLES THAT WE DON'T NEED TO EVER CHANGE
     private static final String mapFilePrefix = "http://www.inf.ed.ac.uk/teaching/courses/selp/coursework/";
     private static final String mapFileSuffix = ".kml";
+    // Map segmentation data. We'll break the placemarks in "chunks" to avoid finding distances to all of them.
+    // Again, this is sort of akin to what one does in procedural isosurface generation. I do have a soft spot for that sort of thing.
+    // Minimal length in metres of a map segment. Best if it's always greater than the maximum "effective radius" of the player.
+    public static final int MAP_SEGMENT_MIN_LENGTH = 25;
+    private static MapSegments mapSegments;
+
+    public static List<Placemark> getDailyPlacemarks() {
+        if (!isMapLoaded) return null;
+        else return dailyMap;
+    }
 
     // This needs to be asynchronous, for obvious reasons
     public static void InitialSetup(final Context appContext) {
@@ -79,8 +104,6 @@ public final class Game {
                 // We'll set the list of words up, and the list of word values as well
 
                 try {
-                    // This is utterly ridiculous, by the way - so convoluted...!
-
                     // Using our fabulous custom-made class, we can simply add all words to the "global" GrabbleDict.
                     // It uses a HashMap, allegedly guaranteeing that duplicates are removed.
                     grabbleDict = new GrabbleDict();
@@ -88,8 +111,6 @@ public final class Game {
                     while ((line = reader.readLine()) != null) {
                         grabbleDict.addWord(new Word(line.toUpperCase()));
                     }
-
-
                 } catch (Exception ex) {
                     result = false; // Make sure we know something's broken
                 }
@@ -127,8 +148,10 @@ public final class Game {
                     isDictLoaded = true;
                     isMapLoaded = true;
 
-                    Toast.makeText(appContext, "game dict size = " + grabbleDict.size() +
-                            "\ntotal ash possible = " + grabbleDict.totalAshValue(), Toast.LENGTH_LONG).show();
+                    //Toast.makeText(appContext, "game dict size = " + grabbleDict.size() +
+                    //        "\ntotal ash possible = " + grabbleDict.totalAshValue(), Toast.LENGTH_LONG).show();
+                    //Toast.makeText(appContext, "min, max LAT = " + minLat + "; " + maxLat +
+                    //                "\nmin, max LON = " + minLon + "; " + maxLon, Toast.LENGTH_LONG).show();
                 }
                 // else TODO: Throw massive errors in a dialog box, quit application
             }
@@ -153,8 +176,15 @@ public final class Game {
 
     // And another little helper.
     private static void ParseXML(Document doc) {
-        dailyMap = new ArrayList<>();
         NodeList points = doc.getElementsByTagName("Placemark");
+
+        // Prepare to segment later
+        double minLat = Double.NaN, maxLat = Double.NaN;
+        double minLon = Double.NaN, maxLon = Double.NaN;
+
+        // Parse the actual thing, without segmenting it yet.
+        // Using a sorted map for this step allows us to order points by ID and remove any potential erroneous duplicates.
+        SortedMap<Integer, Placemark> unsegmentedPlacemarks = new TreeMap<>();
         for (int i = 0; i < points.getLength(); i++) {
             Element point = (Element)points.item(i);
             // Placemarks have only one 'name', 'description', and 'coordinates' sub-tags.
@@ -164,23 +194,52 @@ public final class Game {
             String[] pointCoords = point.getElementsByTagName("coordinates").item(0).getTextContent().split(","); // "LNG,LAT,0"
             // Now we ought to finish the parsing
             int parsedID = Integer.parseInt(pointID.split(" ")[1]);
-            // of course the coursework kml files use a format that's not the same as what everyone else uses (LNG,LAT -> LAT,LNG)
             double latitude = Double.parseDouble(pointCoords[1]);
             double longitude = Double.parseDouble(pointCoords[0]);
+            // Whilst we're here, we should calculate the "bounds" of all placemarks, so to speak, so that we know what area the "zone" spans
+            if (Double.isNaN(minLat) || minLat > latitude) minLat = latitude;
+            if (Double.isNaN(maxLat) || maxLat < latitude) maxLat = latitude;
+            if (Double.isNaN(minLon) || minLon > longitude) minLon = longitude;
+            if (Double.isNaN(maxLon) || maxLon < longitude) maxLon = longitude;
 
-            dailyMap.add(new Placemark(parsedID, Letter.fromChar(pointLetter), latitude, longitude));
+
+            //Log.e("tag", "Lon diff = " + SphericalUtil.computeDistanceBetween(new LatLng(minLat, minLon), new LatLng(minLat, maxLon)));
+            //Log.e("tag", "Lat diff = " + SphericalUtil.computeDistanceBetween(new LatLng(minLat, minLon), new LatLng(maxLat, minLon)));
+
+            // Unfortunately, we'll have to loop through all placemarks a second time in order to have already calculated the bounds.
+            unsegmentedPlacemarks.put(parsedID, new Placemark(parsedID, Letter.fromChar(pointLetter), latitude, longitude, 0));
         }
+        // After knowing the bounds of the game area, add a little margin to help with any possible floating point imprecision issues
+        // We do this by initialising the map segments variable, and rounding our bounds to 4 decimal places.
+        // 4 decimal places ≈ 10 m accuracy (and I'd like a margin of 10 metres).
+        mapSegments = new MapSegments(minLat, maxLat, minLon, maxLon, "#.####");
+
+        // We'll also create the bounds here.
+        mapBounds = new LatLngBounds(new LatLng(minLat, minLon), new LatLng(maxLat, maxLon));
+
+        // Finally, assign segments to all points. Sheeeeesh, we're done.
+        dailyMap = new ArrayList<>();
+        for(Placemark point : unsegmentedPlacemarks.values()) { // This also does them in order of their IDs now
+            // GARBAGE FOR THE GARBAGE (collector) GOD
+            dailyMap.add(new Placemark(point.pointID(), point.letter(), point.coords(), mapSegments.computeSegment(point.coords())));
+        }
+
+        // DONE AND DONE!
+
+
     }
 
-    // Add another one
-    static String convertStreamToString(java.io.InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-        String string = "";
-        while(s.hasNext()){
-            string += s.next();
-        }
-        return string;
-    }
 
+    // And another one, this time for faction name randomisation.
+    // Writing stuff like this is quite fun (and also mostly pointless)
+    public static String getRandomFactionName(Alignment alignment) {
+        // The closers are basically the "good guys", and the openers are the "bad guys".
+        // The names should sort of attempt to reflect that.
+        // Pre-made faction names will consist of several segments
+
+        // TODO: implement class, prefix marking, stuff like that.
+
+        return "";
+    }
 
 }

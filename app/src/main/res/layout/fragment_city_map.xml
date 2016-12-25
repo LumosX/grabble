@@ -23,5 +23,6 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:textSize="36sp"
-        android:gravity="center" />
+        android:gravity="center"
+        android:visibility="invisible" />
 </RelativeLayout>

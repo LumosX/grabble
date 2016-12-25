@@ -17,19 +17,20 @@ public final class Network {
     }
 
 
-
     // CRAP TO REMOVE IN THE REAL VERSION
-    static List<PlayerData> playersThatExist = new ArrayList<>();
-    static List<FactionData> factionsThatExist = new ArrayList<>();
+    private static List<PlayerData> playersThatExist = new ArrayList<>();
+    private static List<FactionData> factionsThatExist = new ArrayList<>();
 
-
+    static {
+        playersThatExist.add(new PlayerData("test", "Jimmy", "test", "Jimmy's Angles", Alignment.Openers));
+    }
 
 
     // NETWORK FUNCTIONALITY
-    public static boolean Login(String username, String password) {
+    public static boolean Login(String email, String password) {
         boolean result = false;
         for (PlayerData p : playersThatExist) {
-            if (p.getUsername().equals(username) && p.getPassword().equals(password)) result = true;
+            if (p.getEmail().equals(email) && p.getPassword().equals(password)) result = true;
         }
         return result;
     }
@@ -37,6 +38,10 @@ public final class Network {
     public static final String REGISTER_SUCCESSFUL = "SUCCESS";
     public static String Register(PlayerData registrant, String confirmPass) {
         // We return the error message as a string, because we're hardcore like that
+
+        // If email is shoddy, throw
+        // Inspired by StackOverflow: http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
+        if (!registrant.getEmail().matches("^.+@.+(\\.[^\\.]+)+$")) return "Email address not valid";
 
         // Bits and bobs lifted from StackOverflow: http://stackoverflow.com/questions/3802192/regexp-java-for-password-validation
         // If passwords don't match, throw
@@ -57,6 +62,16 @@ public final class Network {
             if (p.getUsername().equals(registrant.getUsername())) return "Username already taken";
             if (p.getCreatedFactionName().equals(registrant.getCreatedFactionName())) return "Faction name already taken";
         }
+
+        // Now the other considerations
+        // Username must be longer than 3 characters
+        int MIN_NAME_LENGTH = 4;
+        if (registrant.getUsername().length() < MIN_NAME_LENGTH) return "Username must be at least " + MIN_NAME_LENGTH + " chars";
+
+        // Faction name
+        int MIN_FAC_NAME_LEN = 6;
+        if (registrant.getCreatedFactionName().length() < MIN_FAC_NAME_LEN)
+            return "Faction name must be at least " + MIN_FAC_NAME_LEN + " chars";
 
         // If all OK, register player:
         playersThatExist.add(registrant);

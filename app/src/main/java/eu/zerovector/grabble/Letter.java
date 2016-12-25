@@ -7,7 +7,7 @@ public enum Letter {
     B(20, 4, 1),
     C(13, 2, 1),
     D(10, 2, 1),
-    E(1,  1, 5),
+    E(1,  1, 3),
     F(15, 3, 1),
     G(18, 3, 1),
     H(9,  2, 1),
@@ -22,7 +22,7 @@ public enum Letter {
     Q(24, 4, 1),
     R(8,  1, 1),
     S(7,  1, 1),
-    T(2,  2, 5),
+    T(2,  2, 3),
     U(12, 2, 1),
     V(21, 4, 1),
     W(17, 3, 1),
@@ -36,7 +36,7 @@ public enum Letter {
     // The amount of Ash the player receives upon destroying ("burning") a letter.
     private int ashDestroyValue;
     // The amount of letters the player destroys at once to get the amount of Ash from the previous value.
-    // Usually 1, but E and T have an effective price of 0.2 and 0.4 Ash, ergo one needs to burn 5 at once.
+    // Usually 1, but E and T have an effective price of 0.33 and 0.67 Ash, ergo one needs to burn 3 at once (Ash is an int).
     private int numToDestroy;
 
     public int getAshCreateValue() {

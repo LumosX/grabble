@@ -1,9 +1,14 @@
 package eu.zerovector.grabble;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -14,9 +19,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.ArrayList;
@@ -24,6 +26,10 @@ import java.util.List;
 
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
+
+//import com.google.android.gms.appindexing.Action;
+//import com.google.android.gms.appindexing.AppIndex;
+//import com.google.android.gms.appindexing.Thing;
 
 
 // Use the Calligraphy library for custom font support.
@@ -47,16 +53,23 @@ public class MainActivity extends AppCompatActivity {
      */
     private GoogleApiClient client;
 
+    // permissions request code
+    private static final int REQUEST_ALL_PERMISSIONS = 1911;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Remove the title bar.
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        // Request all permissions we're going to need (valid for API >= 23)
+        // The application dies if they're not granted.
+        getAllPermissions();
+
         // It's really important to load the dictionary and the daily map here.
         // Even before the UI stuff starts happening
         Game.InitialSetup(getApplicationContext());
-
-        // Remove the title bar.
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         // Also set up the custom font we'll be using.
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
@@ -80,10 +93,6 @@ public class MainActivity extends AppCompatActivity {
         changeAlignment(Alignment.Closers);
         // We also need to hide all registration-related fields.
         MM_setPage(false);
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     // Add the Calligraphy wrapper.
@@ -111,8 +120,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void btnLogin_click(View v) {
-        // TODO: LOG IN, SHOW GAME
-        if (Network.Login(tbUsername.getText().toString(), tbPassword.getText().toString())) {
+        // If the game hasn't loaded yet, display it.
+
+
+        if (Network.Login(tbEmail.getText().toString(), tbPassword.getText().toString())) {
             Intent myIntent = new Intent(this, GameActivity.class);
             //myIntent.putExtra("key", value); //Optional parameters
             this.startActivity(myIntent);
@@ -123,6 +134,10 @@ public class MainActivity extends AppCompatActivity {
     public void btnRegister_click(View v) {
         // Make the expanded registration controls visible.
         MM_setPage(true);
+    }
+
+    public void btnRandomise_click(View v) {
+        tbFactionName.setText(Game.getRandomFactionName(registrantAlignment));
     }
 
     public void btnClosers_click(View v) {
@@ -137,7 +152,12 @@ public class MainActivity extends AppCompatActivity {
         PlayerData registrant = new PlayerData(tbEmail.getText().toString(), tbUsername.getText().toString(),
                 tbPassword.getText().toString(), tbFactionName.getText().toString(), registrantAlignment);
         String regResult = Network.Register(registrant, tbConfirmPassword.getText().toString()); // I'm a lazy bastard, I know
-        if (regResult.equals(Network.REGISTER_SUCCESSFUL)) btnLogin_click(v);
+        if (regResult.equals(Network.REGISTER_SUCCESSFUL)) {
+            // Automatically attempt to log in.
+            btnLogin_click(v);
+            // In case nothing happens (game not loaded yet), just return to the "login page"
+            MM_setPage(false);
+        }
         else
             Toast.makeText(getApplicationContext(), "Registration failed: " + regResult, Toast.LENGTH_LONG).show();
     }
@@ -199,40 +219,63 @@ public class MainActivity extends AppCompatActivity {
         return visited;
     }
 
+    // Self-explanatory
+    private void getAllPermissions() {
+        // First check if location is enabled
+        boolean locationEnabled = false;
+        LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) || !manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                    .setCancelable(false)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, final int id) {
+                            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                        }
+                    })
+                    .setNegativeButton("No", null);
+            final AlertDialog alert = builder.create();
+            alert.show();
+        }
+        else locationEnabled = true;
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
+        // If activating the location was denied denied, kill the app and show the toast for it.
+        if (!locationEnabled) {
+            Toast.makeText(getApplicationContext(), "Grabble can't operate without location data.\n" +
+                    "Please allow its use to continue.",Toast.LENGTH_LONG).show();
+            this.finishAffinity();
+        }
+
+        // Now check whether we've already got the permissions
+        int ok = PackageManager.PERMISSION_GRANTED; // shortening
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == ok &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == ok &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == ok &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == ok) return;
+
+        // If any of these are missing, request them all.
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE,
+                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                REQUEST_ALL_PERMISSIONS);
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
-        client.disconnect();
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (requestCode == REQUEST_ALL_PERMISSIONS) {
+            // This sodding language doesn't even have 'goto'!
+            allgood: if (grantResults.length > 0) {
+                for (int result : grantResults) {
+                    if (result == PackageManager.PERMISSION_DENIED) break allgood;
+                }
+                return;
+            }
+            // These labelled breaks are fun though!
+            // ELSE:
+            // If at least one of the permissions was denied, kill the app and show the toast for it.
+            Toast.makeText(getApplicationContext(), "Grabble can't operate without those permissions.\n" +
+                    "Please allow their use to continue.",Toast.LENGTH_LONG).show();
+            this.finishAffinity();
+        }
     }
 }
