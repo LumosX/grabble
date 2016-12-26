@@ -38,24 +38,29 @@ public final class Game {
         // This will trigger only once, upon generating the singleton instance.
         // Ergo, we can make sure the game knows when it's actually ready to do things
         isDictLoaded = false;
-        isMapLoaded = false;
+        isMapDataLoaded = false;
     }
+
+    // HARDCODED GAME CONSTANTS
+    public static final int GLOBAL_ACTIVITY_RESULT_KILL = 0;
+    public static final int GLOBAL_ACTIVITY_RESULT_LOGOUT = 1;
+
 
     // Game state checking vars - plus public getters, just in case
     private static boolean isDictLoaded = false;
-    private static boolean isMapLoaded = false;
+    private static boolean isMapDataLoaded = false;
     public static boolean isDictLoaded() {
         return isDictLoaded;
     }
-    public static boolean isMapLoaded() {
-        return isMapLoaded;
+    public static boolean isMapDataLoaded() {
+        return isMapDataLoaded;
     }
 
 
 
     private static LatLngBounds mapBounds; // The bounds of the map.
     public static LatLngBounds getMapBounds() {
-        if (!isMapLoaded) return null;
+        if (!isMapDataLoaded) return null;
         else return mapBounds;
     }
 
@@ -86,7 +91,7 @@ public final class Game {
     private static MapSegments mapSegments;
 
     public static List<Placemark> getDailyPlacemarks() {
-        if (!isMapLoaded) return null;
+        if (!isMapDataLoaded) return null;
         else return dailyMap;
     }
 
@@ -146,7 +151,7 @@ public final class Game {
                 // The game now knows its dictionary and map have been loaded without issues
                 if (result) {
                     isDictLoaded = true;
-                    isMapLoaded = true;
+                    isMapDataLoaded = true;
 
                     //Toast.makeText(appContext, "game dict size = " + grabbleDict.size() +
                     //        "\ntotal ash possible = " + grabbleDict.totalAshValue(), Toast.LENGTH_LONG).show();
@@ -182,6 +187,9 @@ public final class Game {
         double minLat = Double.NaN, maxLat = Double.NaN;
         double minLon = Double.NaN, maxLon = Double.NaN;
 
+        double offsetLat = 58.8618902 - 55.94478;
+        double offsetLon = 5.7836856 + 3.1883597;
+
         // Parse the actual thing, without segmenting it yet.
         // Using a sorted map for this step allows us to order points by ID and remove any potential erroneous duplicates.
         SortedMap<Integer, Placemark> unsegmentedPlacemarks = new TreeMap<>();
@@ -194,8 +202,8 @@ public final class Game {
             String[] pointCoords = point.getElementsByTagName("coordinates").item(0).getTextContent().split(","); // "LNG,LAT,0"
             // Now we ought to finish the parsing
             int parsedID = Integer.parseInt(pointID.split(" ")[1]);
-            double latitude = Double.parseDouble(pointCoords[1]);
-            double longitude = Double.parseDouble(pointCoords[0]);
+            double latitude = Double.parseDouble(pointCoords[1]) + offsetLat;
+            double longitude = Double.parseDouble(pointCoords[0]) + offsetLon;
             // Whilst we're here, we should calculate the "bounds" of all placemarks, so to speak, so that we know what area the "zone" spans
             if (Double.isNaN(minLat) || minLat > latitude) minLat = latitude;
             if (Double.isNaN(maxLat) || maxLat < latitude) maxLat = latitude;

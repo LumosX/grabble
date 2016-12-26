@@ -12,8 +12,9 @@ public class PlayerData {
     private String currentFactionName; // The name of the CURRENT faction the player is a member of
     private Alignment alignment; // The player's alignment, never changes.
     private int ash; // Current Ash amount
-    private  int experience; // Player experience;
+    private int experience; // Player experience;
     private Inventory inventory; // The player's current inventory
+    private Word currentWord; // And the word that the player is currently trying to complete
 
     public PlayerData(String email, String username, String password, String createdFactionName, Alignment alignment) {
         this.email = email;

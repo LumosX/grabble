@@ -36,7 +36,7 @@ public class GrabbleDict {
         return wordMap.size();
     }
 
-    // Cusomised setting functions.
+    // Customised setting functions.
     public void addWord(Word element) {
         addWord(element, Boolean.FALSE);
     }

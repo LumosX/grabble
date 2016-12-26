@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.Window;
+import android.widget.Toast;
 
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
@@ -31,12 +32,9 @@ public class GameActivity extends FragmentActivity {
         // Do everything else
         setContentView(R.layout.activity_game);
 
-        // Also don't forget to set the actual game up
-
-
-
+        // Fix pager
         ViewPager pager = (ViewPager)findViewById(R.id.viewPager);
-        pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        pager.setAdapter(new gamePagerAdapter(getSupportFragmentManager()));
         pager.setCurrentItem(1); // Set the page to the city map
 
     }
@@ -47,11 +45,44 @@ public class GameActivity extends FragmentActivity {
     }
 
 
+    // Here, we also override the back button, but to allow the user to log out instead.
+    private long lastBackPressTime = 0;
+    private int backTaps = 0;
+    private final int LOGOUT_TAP_INTERVAL_MILLISECONDS = 2000;
+    private final int LOGOUT_TAPS_NEEDED = 5;
+    private Toast lastBackMessageShown = null;
+    @Override
+    public void onBackPressed() {
+        // Allow the user to exit to main menu
+        long currentPressTime = System.currentTimeMillis();
+        if (currentPressTime - lastBackPressTime > LOGOUT_TAP_INTERVAL_MILLISECONDS) {
+            backTaps = 0;
+        }
+        lastBackPressTime = currentPressTime;
+
+        // Kill if the button has been pressed enough times
+        if (backTaps >= LOGOUT_TAPS_NEEDED - 1) {
+            this.setResult(Game.GLOBAL_ACTIVITY_RESULT_LOGOUT);
+            this.finish();
+            if (lastBackMessageShown != null) lastBackMessageShown.cancel();
+        }
+        // Otherwise display a relevant message
+        else {
+            backTaps += 1;
+            int tapsRemaining = LOGOUT_TAPS_NEEDED - backTaps;
+            String message = "Tap the button " + tapsRemaining + " more times to log out.";
+            if (tapsRemaining == 1) message = "Tap the button once more to log out.";
+            if (lastBackMessageShown != null) lastBackMessageShown.cancel();
+            lastBackMessageShown = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+            lastBackMessageShown.show();
+        }
+    }
+
 
 
     // Pager adapter implementation
-    private class MyPagerAdapter extends FragmentPagerAdapter {
-        public MyPagerAdapter(FragmentManager fm) {
+    private class gamePagerAdapter extends FragmentPagerAdapter {
+        public gamePagerAdapter(FragmentManager fm) {
             super(fm);
         }
 

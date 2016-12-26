@@ -1,12 +1,9 @@
 package eu.zerovector.grabble;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -92,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         // Assign default alignment to "Closers" - they're the good guys, after all.
         changeAlignment(Alignment.Closers);
         // We also need to hide all registration-related fields.
-        MM_setPage(false);
+        setPage(false);
     }
 
     // Add the Calligraphy wrapper.
@@ -102,9 +99,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Also override the "back" button when we need it
+    private long lastBackPressTime = 0;
+    private int backTaps = 0;
+    private final int QUIT_TAP_INTERVAL_MILLISECONDS = 2000;
+    private final int QUIT_TAPS_NEEDED = 5;
+    private Toast lastBackMessageShown = null;
     @Override
     public void onBackPressed() {
-        MM_setPage(false); // Return to the "login" "page" if registering
+        // Return to the "login" "page" if registering
+        setPage(false);
+
+        // Allow the user to quit the application upon five quick presses
+        long currentPressTime = System.currentTimeMillis();
+        if (currentPressTime - lastBackPressTime > QUIT_TAP_INTERVAL_MILLISECONDS) {
+            backTaps = 0;
+        }
+        lastBackPressTime = currentPressTime;
+
+        // Kill if the button has been pressed enough times
+        if (backTaps >= QUIT_TAPS_NEEDED - 1) {
+            this.finishAffinity();
+            if (lastBackMessageShown != null) lastBackMessageShown.cancel();
+        }
+        // Otherwise display a relevant message
+        else {
+            backTaps += 1;
+            int tapsRemaining = QUIT_TAPS_NEEDED - backTaps;
+            String message = "Tap the button " + tapsRemaining + " more times to exit.";
+            if (tapsRemaining == 1) message = "Tap the button once more to exit.";
+            if (lastBackMessageShown != null) lastBackMessageShown.cancel();
+            lastBackMessageShown = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+            lastBackMessageShown.show();
+        }
     }
 
     // Functions
@@ -121,19 +147,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void btnLogin_click(View v) {
         // If the game hasn't loaded yet, display it.
-
-
         if (Network.Login(tbEmail.getText().toString(), tbPassword.getText().toString())) {
-            Intent myIntent = new Intent(this, GameActivity.class);
+            Intent game = new Intent(this, GameActivity.class);
             //myIntent.putExtra("key", value); //Optional parameters
-            this.startActivity(myIntent);
+            this.startActivityForResult(game, 0);
         }
         else Toast.makeText(getApplicationContext(), "Couldn't log in: details not recognised", Toast.LENGTH_LONG).show();
     }
 
     public void btnRegister_click(View v) {
         // Make the expanded registration controls visible.
-        MM_setPage(true);
+        setPage(true);
     }
 
     public void btnRandomise_click(View v) {
@@ -156,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
             // Automatically attempt to log in.
             btnLogin_click(v);
             // In case nothing happens (game not loaded yet), just return to the "login page"
-            MM_setPage(false);
+            setPage(false);
         }
         else
             Toast.makeText(getApplicationContext(), "Registration failed: " + regResult, Toast.LENGTH_LONG).show();
@@ -182,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // Changes the "page", from login to registration, or vice versa, by looking at the tags
-    private void MM_setPage(boolean register) {
+    private void setPage(boolean register) {
         List<View> views = getAllChildrenBFS(findViewById(android.R.id.content));
         if (register) {
             for (View v : views) { // What the hell, "in" is apparently in-valid.
@@ -221,32 +245,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Self-explanatory
     private void getAllPermissions() {
-        // First check if location is enabled
-        boolean locationEnabled = false;
-        LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) || !manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-                    .setCancelable(false)
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                        public void onClick(final DialogInterface dialog, final int id) {
-                            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                        }
-                    })
-                    .setNegativeButton("No", null);
-            final AlertDialog alert = builder.create();
-            alert.show();
-        }
-        else locationEnabled = true;
-
-        // If activating the location was denied denied, kill the app and show the toast for it.
-        if (!locationEnabled) {
-            Toast.makeText(getApplicationContext(), "Grabble can't operate without location data.\n" +
-                    "Please allow its use to continue.",Toast.LENGTH_LONG).show();
-            this.finishAffinity();
-        }
-
-        // Now check whether we've already got the permissions
+        // Check whether we've already got the permissions
         int ok = PackageManager.PERMISSION_GRANTED; // shortening
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == ok &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == ok &&
@@ -275,6 +274,15 @@ public class MainActivity extends AppCompatActivity {
             // If at least one of the permissions was denied, kill the app and show the toast for it.
             Toast.makeText(getApplicationContext(), "Grabble can't operate without those permissions.\n" +
                     "Please allow their use to continue.",Toast.LENGTH_LONG).show();
+            this.finishAffinity();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Game.GLOBAL_ACTIVITY_RESULT_KILL) { // KILL CODE
             this.finishAffinity();
         }
     }

@@ -153,4 +153,5 @@
     <color name="Navy">#000080</color>
     <color name="Black">#000000</color>
     <color name="grey_very_dark_semitransparent">#a1202020</color>
+    <color name="UI_AshGrey">#a5a5a5</color>
 </resources>
