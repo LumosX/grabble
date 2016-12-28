@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             String message = "Tap the button " + tapsRemaining + " more times to exit.";
             if (tapsRemaining == 1) message = "Tap the button once more to exit.";
             if (lastBackMessageShown != null) lastBackMessageShown.cancel();
-            lastBackMessageShown = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+            lastBackMessageShown = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
             lastBackMessageShown.show();
         }
     }

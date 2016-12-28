@@ -163,7 +163,7 @@
             android:id="@+id/spcAlignments" />
 
         <ImageButton
-            app:srcCompat="@drawable/closers"
+            app:srcCompat="@drawable/icon_closers"
             android:id="@+id/btnClosers"
             android:background="@color/grey_semitransparent"
             android:scaleType="fitCenter"
@@ -177,7 +177,7 @@
             android:tag="MM_REGISTRATION" />
 
         <ImageButton
-            app:srcCompat="@drawable/openers"
+            app:srcCompat="@drawable/icon_openers"
             android:id="@+id/btnOpeners"
             android:background="@color/grey_dark_semitransparent"
             android:scaleType="fitCenter"

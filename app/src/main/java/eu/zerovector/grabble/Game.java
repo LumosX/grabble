@@ -241,13 +241,12 @@ public final class Game {
     // And another one, this time for faction name randomisation.
     // Writing stuff like this is quite fun (and also mostly pointless)
     public static String getRandomFactionName(Alignment alignment) {
-        // The closers are basically the "good guys", and the openers are the "bad guys".
+        // The icon_closers are basically the "good guys", and the icon_openers are the "bad guys".
         // The names should sort of attempt to reflect that.
-        // Pre-made faction names will consist of several segments
+        // Pre-made faction names will consist of several segments.
+        // Ended up making a class for this.
+        return RandomNameGenerator.getFactionName(alignment);
 
-        // TODO: implement class, prefix marking, stuff like that.
-
-        return "";
     }
 
 }

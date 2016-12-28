@@ -73,7 +73,7 @@ public class GameActivity extends FragmentActivity {
             String message = "Tap the button " + tapsRemaining + " more times to log out.";
             if (tapsRemaining == 1) message = "Tap the button once more to log out.";
             if (lastBackMessageShown != null) lastBackMessageShown.cancel();
-            lastBackMessageShown = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+            lastBackMessageShown = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
             lastBackMessageShown.show();
         }
     }

@@ -223,6 +223,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                     requestingLocationUpdates = true;
                 }
             });
+        Log.i(TAG, "starting location updates");
     }
 
     // ... and stop the location updates from the FusedAPI
@@ -366,6 +367,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         mapInitialised = true;
         this.map = googleMap;
         InitMap();
+        mapView.onResume();
     }
 
     // To be triggered iff the map is ready to work, and only ONCE.
