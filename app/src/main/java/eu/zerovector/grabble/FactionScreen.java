@@ -9,12 +9,8 @@ import android.view.ViewGroup;
 // Fragment for the Map screen.
 public class FactionScreen extends Fragment {
 
-    public FactionScreen() {
-        // Required empty public constructor
-    }
-
-
-    public static FactionScreen newInstance(String param1, String param2) {
+    public FactionScreen() { }
+    public static FactionScreen newInstance() {
         return new FactionScreen();
     }
 

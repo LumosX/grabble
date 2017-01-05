@@ -1,6 +1,8 @@
 package eu.zerovector.grabble;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 // This class is here to facilitate easier management of the entire dictionary. Also good for factions.
 public class GrabbleDict {
@@ -27,7 +29,7 @@ public class GrabbleDict {
         totalAshValue = result;
         isDirty = false;
         return result;
-    }
+}
 
     // I just remembered that the Map doesn't have a 'getSize' method, and has a 'size' method instead.
     // Time to refactor everything (unambiguous) from 'getX' to 'X'.
@@ -45,5 +47,9 @@ public class GrabbleDict {
         wordMap.put(element, isCompleted);
         // Must also flag the map as dirty, i.e. notifying the "total ash value" method that things have changed
         isDirty = true;
+    }
+
+    public Set<Map.Entry<Word, Boolean>> entrySet() {
+        return wordMap.entrySet();
     }
 }

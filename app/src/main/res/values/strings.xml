@@ -1,8 +1,30 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Grabble</string>
     <string name="action_settings">Settings</string>
     <string name="lblAlignment">Alignment: %1$s</string>
     <string name="dummy_content">dummy_content</string>
     <string name="title_activity_maps">Map</string>
+    <!-- STUFF -->
+    <string name="lblRightArrowFaction">Faction ▶</string>
+    <string name="lblLeftArrowCityMap">◀ City Map</string>
+    <string name="lblRightArrowCityMap">City Map ▶</string>
+    <string name="lblUpArrowAshery">▲ Ashery</string>
+    <string name="lblDownArrowCrematorium">▼ Crematorium</string>
+    <string name="lblLeftArrowCollection">◀ Collection</string>
+    <string name="lblUpArrowCollection">▲ Collection</string>
+    <string name="lblDownArrowCollection">▼ Collection</string>
 
+        <string name="abc_action_bar_home_description">Navigate home</string>
+        <string name="abc_action_bar_up_description">Navigate up</string>
+        <string name="abc_action_menu_overflow_description">More options</string>
+        <string name="abc_action_mode_done">Finished</string>
+        <string name="abc_activity_chooser_view_see_all">See all</string>
+        <string name="abc_activitychooserview_choose_application">Choose an app</string>
+        <string name="abc_searchview_description_clear">Clear query</string>
+        <string name="abc_searchview_description_query">Search query</string>
+        <string name="abc_searchview_description_search">Search</string>
+        <string name="abc_searchview_description_submit">Submit query</string>
+        <string name="abc_searchview_description_voice" tools:override="true">Voice search</string>
+        <string name="abc_shareactionprovider_share_with">Share with</string>
+        <string name="abc_shareactionprovider_share_with_application">Share with %s</string>
 </resources>

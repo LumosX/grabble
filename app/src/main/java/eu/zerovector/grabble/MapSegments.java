@@ -92,7 +92,7 @@ public class MapSegments {
         // Dividing the current "vector" by the segment size produces a fraction that tells us where the point lies in that dimension.
         // We don't give a shit about its exact position, so we convert it to an int - which is the segment ID from the origin.
         int latSegment = (int)((pointCoords.latitude - minLatitude) / deltaLatitude);
-        int lonSegment = (int)((pointCoords.latitude - minLatitude) / deltaLatitude);
+        int lonSegment = (int)((pointCoords.longitude - minLongitude) / deltaLongitude);
         // Then we need to clamp any potential "outliers" into the array bounds.
         latSegment = clampInt(latSegment, 0, numLatSegments - 1);
         lonSegment = clampInt(lonSegment, 0, numLonSegments - 1);
@@ -105,16 +105,15 @@ public class MapSegments {
     public List<Integer> computeNeighbourSegments(int segmentIndex) {
         List<Integer> neighbours = new ArrayList<>();
         // I can do it the smart way, but I'd rather do it the hard way and avoid fucking it up
-        // I've effectively created an (Y,X) mapping with this array... Oh well, who cares.
         for (int i = 0; i < segmentArray.length; i++) {
             for (int j = 0; j < segmentArray[i].length; j++) {
-                if (segmentArray[i][j] == i) { // Find the segment
+                if (segmentArray[i][j] == segmentIndex) { // Find the segment
                     // Check which "directions" are good
                     boolean N = false; boolean S = false; boolean E = false; boolean W = false;
                     if (i > 1) S = true;
                     if (i < numLatSegments - 1) N = true;
                     if (j > 1) W = true;
-                    if (i < numLatSegments - 1) E = true;
+                    if (i < numLonSegments - 1) E = true;
                     // And now add the 8 neighbouring elements the the list, depending on whether all's OK
                     if (S) neighbours.add(segmentArray[i-1][j]);
                     if (N) neighbours.add(segmentArray[i+1][j]);
@@ -129,6 +128,14 @@ public class MapSegments {
         }
         // What a terribly inelegant function.
         return neighbours;
+    }
+
+    // And one of these, because functions need to do what they say on the tin.
+    public List<Integer> computeSegmentAndNeighbours(LatLng pointCoords) {
+        int seg = computeSegment(pointCoords);
+        List<Integer> result = computeNeighbourSegments(seg);
+        result.add(seg);
+        return result;
     }
 
     // Java doesn't even have a 'Math.clamp' function. And no extension methods, either. BOOO!

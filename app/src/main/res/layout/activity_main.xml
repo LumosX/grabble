@@ -10,7 +10,7 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:srcCompat="@drawable/mainmenu_background"
+        app:srcCompat="@drawable/background_main_menu"
         android:id="@+id/backgroundImage"
         android:scaleType="centerCrop" />
 
@@ -34,6 +34,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="16dp"
             android:hint="Email"
+            android:maxLines="1"
             android:textColorHint="@color/hint_colour" />
 
         <ImageView
@@ -65,6 +66,7 @@
             android:layout_below="@+id/tbEmail"
             android:layout_centerHorizontal="true"
             android:hint="Password"
+            android:maxLines="1"
             android:textColorHint="@color/hint_colour" />
 
         <EditText
@@ -83,6 +85,7 @@
             android:layout_below="@+id/tbPass"
             android:layout_centerHorizontal="true"
             android:hint="Confirm Password"
+            android:maxLines="1"
             android:textColorHint="@color/hint_colour"
             android:tag="MM_REGISTRATION" />
 
@@ -102,6 +105,7 @@
             android:layout_below="@+id/tbConfirmPass"
             android:layout_centerHorizontal="true"
             android:hint="Username"
+            android:maxLines="1"
             android:textColorHint="@color/hint_colour"
             android:tag="MM_REGISTRATION" />
 
@@ -120,6 +124,7 @@
             android:layout_marginTop="16dp"
             android:layout_below="@+id/tbUsername"
             android:hint="Faction name"
+            android:maxLines="1"
             android:textColorHint="@color/hint_colour"
             android:tag="MM_REGISTRATION" />
 

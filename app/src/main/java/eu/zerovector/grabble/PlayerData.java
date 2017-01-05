@@ -91,6 +91,14 @@ public class PlayerData {
         this.inventory = inventory;
     }
 
+    public Word getCurrentWord() {
+        return currentWord;
+    }
+
+    public void setCurrentWord(Word currentWord) {
+        this.currentWord = currentWord;
+    }
+
     // Override equals and hashCode to "fix" comparison:
     // Since a user's email address is the only thing we need to identify them, we only need compare it and it alone
     @Override

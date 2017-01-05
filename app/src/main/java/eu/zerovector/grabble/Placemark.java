@@ -34,4 +34,16 @@ public class Placemark {
     }
 
     public int segmentID() { return segmentID; }
+
+    // The only truly important thing required to differentiate a point is its ID.
+    @Override
+    public boolean equals(Object obj) {
+        if ((obj instanceof Placemark) && (((Placemark)obj).pointID == this.pointID)) return true;
+        else return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.pointID;
+    }
 }

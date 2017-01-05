@@ -1,5 +1,9 @@
 package eu.zerovector.grabble;
 
+
+import android.content.Context;
+import android.content.res.TypedArray;
+
 // One good thing about Java are the enums.
 // This enum represents all possible letters and their 'ash' values (both for creating and destroying)
 public enum Letter {
@@ -30,6 +34,8 @@ public enum Letter {
     Y(16, 3, 1),
     Z(26, 5, 1);
 
+    public static final Letter[] values = values(); // 1e37 h4x
+
     // The letter's "value", as per the coursework handout. Also the Ash price the player needs to pay
     // to create a new letter of that kind.
     private int ashCreateValue;
@@ -49,6 +55,15 @@ public enum Letter {
 
     public int getNumToDestroy() {
         return numToDestroy;
+    }
+
+    public int getMarkerIconResourceID(Context context) {
+        TypedArray icons = context.getResources().obtainTypedArray(eu.zerovector.grabble.R.array.marker_letter_icons);
+        int offset = this.ordinal();
+        // We can use the default value to return the unknown marker! Neat!
+        int result = icons.getResourceId(offset, eu.zerovector.grabble.R.drawable.marker_letters_unknown);
+        icons.recycle(); // This must be done, and must be the final use of the array
+        return result;
     }
 
     Letter(int ashCreateValue, int ashDestroyValue, int numToDestroy) {

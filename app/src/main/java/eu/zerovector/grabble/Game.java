@@ -18,7 +18,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -45,6 +48,17 @@ public final class Game {
     public static final int GLOBAL_ACTIVITY_RESULT_KILL = 0;
     public static final int GLOBAL_ACTIVITY_RESULT_LOGOUT = 1;
 
+    // The radius that we'll be GRABBLE-ing letters at.
+    public static final double LETTER_GRABBING_DISTANCE = 6.0;
+    public static final double LETTER_SEEING_DISTANCE = 15.0;
+
+
+    // And the actual data representation of the player that's currently logged in
+    private static PlayerData currentPlayer;
+    public static PlayerData currentPlayerData() {
+        if (isPlayerLoggedIn) return currentPlayer;
+        return null;
+    }
 
     // Game state checking vars - plus public getters, just in case
     private static boolean isDictLoaded = false;
@@ -56,12 +70,24 @@ public final class Game {
         return isMapDataLoaded;
     }
 
+    // Now some for the actual player:
+    private static boolean isPlayerLoggedIn = false;
+    public static boolean isIsPlayerLoggedIn() {
+        return isPlayerLoggedIn;
+    }
+
 
 
     private static LatLngBounds mapBounds; // The bounds of the map.
+    private static LatLng mapCentre; // The centre of the map
     public static LatLngBounds getMapBounds() {
-        if (!isMapDataLoaded) return null;
-        else return mapBounds;
+        if (isMapDataLoaded) return mapBounds;
+        else return null;
+    }
+
+    public static LatLng getMapBoundsCentre() {
+        if (isMapDataLoaded) return mapCentre;
+        else return null;
     }
 
 
@@ -75,8 +101,8 @@ public final class Game {
         else return 23869;
     }
     public static GrabbleDict getGameDictionary() {
-        if (!isDictLoaded) return null;
-        else return grabbleDict;
+        if (isDictLoaded) return grabbleDict;
+        else return null;
     }
 
     // Daily map stuff
@@ -86,13 +112,19 @@ public final class Game {
     private static final String mapFileSuffix = ".kml";
     // Map segmentation data. We'll break the placemarks in "chunks" to avoid finding distances to all of them.
     // Again, this is sort of akin to what one does in procedural isosurface generation. I do have a soft spot for that sort of thing.
+
     // Minimal length in metres of a map segment. Best if it's always greater than the maximum "effective radius" of the player.
     public static final int MAP_SEGMENT_MIN_LENGTH = 25;
     private static MapSegments mapSegments;
 
     public static List<Placemark> getDailyPlacemarks() {
-        if (!isMapDataLoaded) return null;
-        else return dailyMap;
+        if (isMapDataLoaded) return dailyMap;
+        else return null;
+    }
+
+    public static MapSegments mapSegmentData() {
+        if (isMapDataLoaded) return mapSegments;
+        else return null;
     }
 
     // This needs to be asynchronous, for obvious reasons
@@ -150,8 +182,9 @@ public final class Game {
             public void onResult(Boolean result) {
                 // The game now knows its dictionary and map have been loaded without issues
                 if (result) {
-                    isDictLoaded = true;
-                    isMapDataLoaded = true;
+
+                    // Just call the thing that happens when the data loads
+                    onDataLoaded();
 
                     //Toast.makeText(appContext, "game dict size = " + grabbleDict.size() +
                     //        "\ntotal ash possible = " + grabbleDict.totalAshValue(), Toast.LENGTH_LONG).show();
@@ -224,6 +257,7 @@ public final class Game {
 
         // We'll also create the bounds here.
         mapBounds = new LatLngBounds(new LatLng(minLat, minLon), new LatLng(maxLat, maxLon));
+        mapCentre = new LatLng((maxLat - minLat) / 2, (maxLon - minLon) / 2);
 
         // Finally, assign segments to all points. Sheeeeesh, we're done.
         dailyMap = new ArrayList<>();
@@ -234,19 +268,65 @@ public final class Game {
 
         // DONE AND DONE!
 
-
     }
-
 
     // And another one, this time for faction name randomisation.
     // Writing stuff like this is quite fun (and also mostly pointless)
     public static String getRandomFactionName(Alignment alignment) {
-        // The icon_closers are basically the "good guys", and the icon_openers are the "bad guys".
+        // The closers are basically the "good guys", and the openers are the "bad guys".
         // The names should sort of attempt to reflect that.
-        // Pre-made faction names will consist of several segments.
         // Ended up making a class for this.
         return RandomNameGenerator.getFactionName(alignment);
+    }
+
+    // Log-in caretaking
+    public static void onLogin(PlayerData player) {
+        currentPlayer = player;
+        isPlayerLoggedIn = true;
+
+        // If the data managed to load before the log-in process, check if the player needs a new word
+        if (isDictLoaded && isMapDataLoaded) checkRequestNewWord();
+    }
+    public static void onLogout() {
+        isPlayerLoggedIn = false;
+        currentPlayer = null;
+    }
+
+    // To be called once we're sure EVERYTHING is good.
+    private static void onDataLoaded() {
+        isDictLoaded = true;
+        isMapDataLoaded = true;
+
+        // if the player managed to login before the data loads, check whether he/she needs a new word
+        if (isPlayerLoggedIn) checkRequestNewWord();
+    }
+
+    // We can't have a situation where there isn't a word, so we need to get a new one in case we need it
+    public static void checkRequestNewWord() {
+        // However, this is only allowed to happen once the dict has been loaded
+        if (!isDictLoaded) return;
+
+        // We need to see if the current word has been completed, and reassign a new word if necessary
+        Word oldWord = currentPlayerData().getCurrentWord();
+        if (oldWord == null || oldWord.isComplete()) {
+            Iterator iter = grabbleDict.entrySet().iterator(); // This iterator stuff is bizarre
+            List<Word> words = new ArrayList<>();
+            while (iter.hasNext()) {
+                Map.Entry pair = (Map.Entry)iter.next();
+                // Incomplete yet words get added to the list
+                if (!(boolean)pair.getValue()) words.add((Word)pair.getKey());
+            }
+            // Get a random word and assign it as the new one
+            currentPlayerData().setCurrentWord(words.get(new Random(System.currentTimeMillis()).nextInt(words.size())));
+        }
+
 
     }
+
+    public static void onPlayerLetterCompleted() {
+
+
+    }
+
 
 }

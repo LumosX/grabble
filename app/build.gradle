@@ -10,6 +10,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        resConfigs "en"
     }
     buildTypes {
         release {
@@ -26,12 +27,14 @@ dependencies {
     })
     compile project(':calligraphy-2.2.0')
     compile 'com.arasthel:asyncjob-library:1.0.3'
+    compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.github.castorflex.verticalviewpager:library:19.0.1'
+    compile 'com.github.lzyzsd:circleprogress:+'
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.android.support:design:24.2.1'
     compile 'com.android.support:support-v4:24.2.1'
     compile 'com.google.android.gms:play-services-location:9.6.0'
     compile 'com.google.android.gms:play-services-maps:9.6.0'
-    compile 'com.google.gms:google-services:3.0.0'
     testCompile 'junit:junit:4.12'
     compile 'com.google.android.gms:play-services-appindexing:9.6.0'
     compile 'com.google.maps.android:android-maps-utils:0.4.4'

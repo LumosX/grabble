@@ -11,7 +11,7 @@ public final class RandomNameGenerator {
 
     // It'll be like an LL-1 grammar, sort of. Fun stuff.
 
-    // Closers first. The icon_closers are the good guys, so we're placing lots of "goody" references for them.
+    // Closers first. The closers are the good guys, so we're placing lots of "goody" references for them.
     private static final String[] closersPrefixes = {"The Most", "Utmost"}; // optional, determined by RNG
     private static final String[] closersTier1 = {"[p] Sacred [2]", "[p] Hallowed [2]", "[p] Honoured [2]", "[p] Holy [2]",
                                                   "[p] Blessed [2]", "[p] Exalted [2]", "Consecrated [2]", "Royal [2]",
@@ -22,15 +22,17 @@ public final class RandomNameGenerator {
     private static final String[] closersTier3 = {"Order", "Fellowship", "Kinship", "Creed", "Brotherhood", "Cult", "Brigade"};
     // references to my own book, Christianity, Dungeons&Dragons, the Malazan Book of the Fallen, Warcraft, and the DR Congo(?).
     private static final String[] closersTier4 = {"the Father", "the Saviour", "the Holy Ghost", "the Holy Light", "Orohim Fireheart",
-                                                  "Aora Elderborn", "the Dawn Goddess", "Nycta", "the Queen", "the Queen of Dreams",
+                                                  "Aora Elderborn", "the Morning Goddess", "Nycta", "the Queen", "the Queen of Dreams",
                                                   "the Firebrand", "Lord Mercer", "Pelor", "Anomander Rake", "Osserc", "House Paran",
                                                   "Kruppe", "Silverfox", "the Whirlwind Goddess", "Starvald Demelain", "Kurald Thyrllan",
                                                   "Jon Snow", "Lady Liadrin", "Uther Lightbringer", "Lordaeron", "Teldrassil", "Kinshasa"};
     private static final String[][] closersTiers = {closersPrefixes, closersTier1, closersTier2, closersTier3, closersTier4};
 
-    // Now the icon_openers. They're the baddies, so we'll put in lots of bad stuff.
+    // Yeah, yeah, I know all this hard-coding is disgusting, but I really don't care
+
+    // Now the openers. They're the baddies, so we'll put in lots of bad stuff.
     private static final String[] openersPrefixes = {"Unholy", "Dark", "Eternal", "Illuminated", "Elucidated", "Ancient"}; // optional
-    // These guys are biased towards cults.
+    // These guys are biased towards cults. So evil.
     private static final String[] openersTier1 = {"[p] Cult of [2]", "[p] Cult of [2]", "[p] Cult of [2]", "[p] Order of [2]",
                                                   "[p] Brotherhood of [2]", "[p] Creed of [2]", "[p] Brethren of [3]"};
     private static final String[] openersTier2 = {"the Damned", "[3]", "the Servants of [3]"};

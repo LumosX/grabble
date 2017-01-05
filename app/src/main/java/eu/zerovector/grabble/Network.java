@@ -16,23 +16,27 @@ public final class Network {
         return instance;
     }
 
+    // TODO: maintain list of network requests (also send System.currentTimeMillis() as request ID)
+    // TODO: lots and lots of stuff
+
 
     // CRAP TO REMOVE IN THE REAL VERSION
     private static List<PlayerData> playersThatExist = new ArrayList<>();
     private static List<FactionData> factionsThatExist = new ArrayList<>();
 
+    // testing stuff
     static {
         playersThatExist.add(new PlayerData("test", "Jimmy", "test", "Jimmy's Angles", Alignment.Openers));
     }
 
 
     // NETWORK FUNCTIONALITY
-    public static boolean Login(String email, String password) {
-        boolean result = false;
+    public static PlayerData Login(String email, String password) {
+        // FIXME: ADD REAL NETWORKED FUNCTIONALITY
         for (PlayerData p : playersThatExist) {
-            if (p.getEmail().equals(email) && p.getPassword().equals(password)) result = true;
+            if (p.getEmail().equals(email) && p.getPassword().equals(password)) return p;
         }
-        return result;
+        return null;
     }
 
     public static final String REGISTER_SUCCESSFUL = "SUCCESS";
@@ -66,7 +70,9 @@ public final class Network {
         // Now the other considerations
         // Username must be longer than 3 characters
         int MIN_NAME_LENGTH = 4;
+        int MAX_NAME_LENGTH = 25; // and 25 at max, because I say so
         if (registrant.getUsername().length() < MIN_NAME_LENGTH) return "Username must be at least " + MIN_NAME_LENGTH + " chars";
+        if (registrant.getUsername().length() > MAX_NAME_LENGTH) return "Username must be " + MAX_NAME_LENGTH + " chars at most";
 
         // Faction name
         int MIN_FAC_NAME_LEN = 6;
@@ -74,14 +80,16 @@ public final class Network {
             return "Faction name must be at least " + MIN_FAC_NAME_LEN + " chars";
 
         // If all OK, register player:
+        // FIXME: ADD REAL NETWORKED FUNCTIONALITY
         playersThatExist.add(registrant);
         factionsThatExist.add(new FactionData(registrant.getCreatedFactionName(), registrant.getUsername()));
         return REGISTER_SUCCESSFUL;
     }
 
 
-    public static boolean GetLetter(int location) {
-        return false; // TODO called when collecting a letter
+    // This is called upon ACTUALLY grabbing a letter.
+    public static void DoLetterGrab(List<Integer> pointIDs) {
+        return;
     }
 }
 

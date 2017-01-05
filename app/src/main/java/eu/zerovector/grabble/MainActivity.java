@@ -82,8 +82,7 @@ public class MainActivity extends AppCompatActivity {
         // Bind the UI variables to the actual components
         BindVarsToUI();
 
-        //Toast.makeText(getApplicationContext(), (new Word("NARTHEX")).equals(new Word("NARTHEX")) + "", Toast.LENGTH_LONG).show();
-
+        //Toast.makeText(this, (new Word("NARTHEX")).equals(new Word("NARTHEX")) + "", Toast.LENGTH_LONG).show();
 
         // We're handling new player registration in the same activity, so we'll need to handle a few more things.
         // Assign default alignment to "Closers" - they're the good guys, after all.
@@ -128,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             String message = "Tap the button " + tapsRemaining + " more times to exit.";
             if (tapsRemaining == 1) message = "Tap the button once more to exit.";
             if (lastBackMessageShown != null) lastBackMessageShown.cancel();
-            lastBackMessageShown = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
+            lastBackMessageShown = Toast.makeText(this, message, Toast.LENGTH_SHORT);
             lastBackMessageShown.show();
         }
     }
@@ -146,13 +145,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void btnLogin_click(View v) {
-        // If the game hasn't loaded yet, display it.
-        if (Network.Login(tbEmail.getText().toString(), tbPassword.getText().toString())) {
+        // Log in, or at least try to.
+        PlayerData player = Network.Login(tbEmail.getText().toString(), tbPassword.getText().toString());
+        if (player != null) {
             Intent game = new Intent(this, GameActivity.class);
-            //myIntent.putExtra("key", value); //Optional parameters
             this.startActivityForResult(game, 0);
+            Game.onLogin(player);
         }
-        else Toast.makeText(getApplicationContext(), "Couldn't log in: details not recognised", Toast.LENGTH_LONG).show();
+        else Toast.makeText(this, "Couldn't log in: details not recognised", Toast.LENGTH_LONG).show();
     }
 
     public void btnRegister_click(View v) {
@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
             setPage(false);
         }
         else
-            Toast.makeText(getApplicationContext(), "Registration failed: " + regResult, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Registration failed: " + regResult, Toast.LENGTH_LONG).show();
     }
 
     private void changeAlignment(Alignment id) {
@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
             // These labelled breaks are fun though!
             // ELSE:
             // If at least one of the permissions was denied, kill the app and show the toast for it.
-            Toast.makeText(getApplicationContext(), "Grabble can't operate without those permissions.\n" +
+            Toast.makeText(this, "Grabble can't operate without those permissions.\n" +
                     "Please allow their use to continue.",Toast.LENGTH_LONG).show();
             this.finishAffinity();
         }
