@@ -192,13 +192,13 @@ public class MainActivity extends AppCompatActivity {
         if (id == Alignment.Closers) { // Closers
             // This indexing system is kinda nifty, actually...
             // Though it is ridiculously overcomplicated.
-            btnOpeners.setBackgroundColor(ContextCompat.getColor(this, R.color.grey_dark_semitransparent));
-            btnClosers.setBackgroundColor(ContextCompat.getColor(this, R.color.grey_semitransparent));
+            btnOpeners.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_DarkGreyTranslucent));
+            btnClosers.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_GreyTranslucent));
             String text = String.format(getResources().getString(R.string.lblAlignment), "Closers");
             lblAlignment.setText(text);
         } else if (id == Alignment.Openers) { // and Openers, too
-            btnOpeners.setBackgroundColor(ContextCompat.getColor(this, R.color.grey_semitransparent));
-            btnClosers.setBackgroundColor(ContextCompat.getColor(this, R.color.grey_dark_semitransparent));
+            btnOpeners.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_GreyTranslucent));
+            btnClosers.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_DarkGreyTranslucent));
             String text = String.format(getResources().getString(R.string.lblAlignment), "Openers");
             lblAlignment.setText(text);
         }

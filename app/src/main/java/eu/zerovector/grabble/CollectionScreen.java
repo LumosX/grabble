@@ -7,10 +7,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.github.lzyzsd.circleprogress.ArcProgress;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -28,8 +30,18 @@ public class CollectionScreen extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
-    // Left/Right col adapter references
-    private boolean listViewsPopulated = false;
+    // Remember all the views and stuff that'll change
+    private RelativeLayout rootView;
+    private TextView lblPlayerName;
+    private TextView lblRankName;
+    private ArcProgress prbExperience;
+    private TextView lblCurrentRank;
+    private TextView lblCurrentAsh;
+    private TextView lblCurrentXP;
+    private TextView lblCurrentGrabRange;
+    private TextView lblCurrentSightRange;
+    private TableLayout tblLetters;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,14 +55,54 @@ public class CollectionScreen extends Fragment {
         Picasso.with(getActivity()).load(R.drawable.icon_grab).into((ImageView)view.findViewById(R.id.imgGrab));
         Picasso.with(getActivity()).load(R.drawable.icon_sight).into((ImageView)view.findViewById(R.id.imgSight));
 
-        // Populate the sodding listviews. CAN THEY MAKE IT ANY MORE CONVOLUTED?!
-        populateListViews(view);
+        // Do the "binding" here. I used this very helpful tool: https://www.buzzingandroid.com/tools/android-layout-finder/
+        rootView = (RelativeLayout)view;
+        lblPlayerName = (TextView)view.findViewById(R.id.lblPlayerName);
+        lblRankName = (TextView)view.findViewById(R.id.lblRankName);
+        prbExperience = (ArcProgress)view.findViewById(R.id.prbExperience);
+        lblCurrentRank = (TextView)view.findViewById(R.id.lblCurrentRank);
+        lblCurrentAsh = (TextView)view.findViewById(R.id.lblCurrentAsh);
+        lblCurrentXP = (TextView)view.findViewById(R.id.lblCurrentXP);
+        lblCurrentGrabRange = (TextView)view.findViewById(R.id.lblCurrentGrabRange);
+        lblCurrentSightRange = (TextView)view.findViewById(R.id.lblCurrentSightRange);
+        tblLetters = (TableLayout)view.findViewById(R.id.tblLetters);
+
+        Game.currentPlayerData().setXP(4400);
+
+        // We can set the name up here - after all, the player's name never changes.
+        lblPlayerName.setText(Game.currentPlayerData().getUsername());
+
+        // Populate everything else in the re-usable function.
+        updateViews();
 
         return view;
     }
 
-    private void populateListViews(View view) {
-        if (Game.currentPlayerData() == null && Game.currentPlayerData().getInventory() != null) return;
+    private void updateViews() {
+        // ALL THE THINGS AT THE TOP
+        // Ash
+        lblCurrentAsh.setText(String.valueOf(Game.currentPlayerData().getAsh()));
+        // XP and level progress
+        int curXP = Game.currentPlayerData().getXP();
+        Experience.LevelDetails levelStats = Experience.getLevelDetailsForXP(curXP);
+        lblCurrentXP.setText(curXP + "/" + levelStats.nextLevelXP());
+        lblCurrentRank.setText(String.valueOf(levelStats.level()));
+        int progress = (int)((double)curXP/(double)levelStats.nextLevelXP() * 100);
+        progress = clampInt(progress, 0, 100);
+        prbExperience.setProgress(progress);
+        // and rank name
+        lblRankName.setText(Experience.getLevelName(levelStats.level(), Game.currentPlayerData().getAlignment()));
+        // Sight and Grab ranges
+        Experience.TraitSet perks = Experience.getPerksForLevel(levelStats.level());
+        lblCurrentGrabRange.setText(perks.getGrabRange() + " m");
+        lblCurrentSightRange.setText(perks.getSightRange() + " m");
+
+
+
+        // NOW THE TABLE WITH ALL THE LETTERS IN
+        // This took me absolute bloody ages to make sort of right...
+        // Clear the table openers.
+        tblLetters.removeAllViews();
         // Grab all the things.
         int[] letterCountsInts = Game.currentPlayerData().getInventory().getLetterCounts();
         int letterCapacity = Game.currentPlayerData().getInventory().getCapacity();
@@ -65,11 +117,10 @@ public class CollectionScreen extends Fragment {
 
         // I tried using gridviews, listviews, adapters and God knows what else. NOTHING WORKS.
         // AS USUAL, IF YOU WANT SOMETHING DONE RIGHT, YOU SHOULD DO IT YOURSELF. BY INFLATING TABLE CELLS. BECAUSE WHY THE FUCK NOT.
-        // So: Get table
+        // So: Get tblLetters
         int NUM_COLS = 3;
-        TableLayout table = (TableLayout)view.findViewById(R.id.tblLetters);
         int numRows = (int)Math.ceil(vals.size()/(float)NUM_COLS);
-        numRows = 3;
+        //numRows = 3;
         // Inflate rows.
         List<TableRow> rows = new ArrayList<>();
         LayoutInflater inflater = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -104,43 +155,16 @@ public class CollectionScreen extends Fragment {
                     lblLetterCount.setText("");
                 }
             }
-            table.addView(row);
+            tblLetters.addView(row);
         }
-
-
-
-        listViewsPopulated = true;
     }
 
-
-    // This left here for history's sake
-    /*
-    private class CollectionLetterAdapter extends ArrayAdapter<String> {
-        private final Context context;
-        private final String[] letterValues;
-        private final String[] letterCounts;
-
-        public CollectionLetterAdapter(Context context, String[] letters, String[] counts) {
-            super(context, -1, letters);
-            this.context = context;
-            this.letterValues = letters;
-            this.letterCounts = counts;
-        }
-
-        @Override @NonNull
-        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View rowView = inflater.inflate(R.layout.collection_layout_letter, parent, false);
-            TextView lblName = (TextView)rowView.findViewById(R.id.lblLetterID);
-            TextView lblCount = (TextView)rowView.findViewById(R.id.lblLetterCount);
-            // VALUES = letter, count => ["A", "4/5"] (capacity pre-calculated)
-            lblName.setText(letterValues[position]);
-            lblCount.setText(letterCounts[position]);
-            return rowView;
-        }
-
+    // I know I shouldn't do it like this, but I will anyway.
+    private int clampInt(int val, int min, int max) {
+        if (val < min) return min;
+        if (val > max) return max;
+        else return val;
     }
-    */
 
 
 }

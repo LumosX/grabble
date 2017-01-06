@@ -247,7 +247,7 @@ public final class Game {
             //Log.e("tag", "Lon diff = " + SphericalUtil.computeDistanceBetween(new LatLng(minLat, minLon), new LatLng(minLat, maxLon)));
             //Log.e("tag", "Lat diff = " + SphericalUtil.computeDistanceBetween(new LatLng(minLat, minLon), new LatLng(maxLat, minLon)));
 
-            // Unfortunately, we'll have to loop through all placemarks a second time in order to have already calculated the bounds.
+            // Unfortunately, we'll have to loop through all placemarks a closers time in order to have already calculated the bounds.
             unsegmentedPlacemarks.put(parsedID, new Placemark(parsedID, Letter.fromChar(pointLetter), latitude, longitude, 0));
         }
         // After knowing the bounds of the game area, add a little margin to help with any possible floating point imprecision issues
