@@ -93,7 +93,7 @@ public class Word {
     public boolean completeLetter(Letter newLetter) {
         List<Letter> letters = toLetterList();
         for (int i = 0, n = letters.size(); i < n; i++) {
-            // We're simply "filling in" the openers empty spot we can find.
+            // We're simply "filling in" the first empty spot we can find.
             if (!completionState[i] && letters.get(i) == newLetter) {
                 completionState[i] = true;
                 return true;

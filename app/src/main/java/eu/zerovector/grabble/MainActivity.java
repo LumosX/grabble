@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         // It's really important to load the dictionary and the daily map here.
         // Even before the UI stuff starts happening
-        Game.InitialSetup(getApplicationContext());
+        Game.InitialSetup(getApplicationContext(), 0);
 
         // Also set up the custom font we'll be using.
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()

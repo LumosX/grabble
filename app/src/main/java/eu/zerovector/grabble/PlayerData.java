@@ -15,6 +15,7 @@ public class PlayerData {
     private int experience; // Player experience;
     private Inventory inventory; // The player's current inventory
     private Word currentWord; // And the word that the player is currently trying to complete
+    private int lettersUntilExtraAsh; // the number of letters that still need to be collected until 1 extra ash is received
 
     public PlayerData(String email, String username, String password, String createdFactionName, Alignment alignment) {
         this.email = email;
@@ -27,6 +28,7 @@ public class PlayerData {
         this.ash = 0;
         this.experience = 0;
         this.inventory = new Inventory();
+        this.lettersUntilExtraAsh = Experience.BASE_PERKS.getNumLettersForOneAsh();
     }
 
     // Email, username, alignment and created faction name will NEVER change, therefore...
@@ -70,8 +72,17 @@ public class PlayerData {
         this.experience = experience;
     }
 
-    public int getXP() { return getExperience(); }
-    public void setXP(int XP) { setExperience(XP); }
+    public int getXP() {
+        return getExperience();
+    }
+
+    public void setXP(int XP) {
+        setExperience(XP);
+    }
+
+    public void addXP(int amount) {
+        setExperience(this.experience += amount);
+    }
 
     public int getAsh() {
         return ash;
@@ -83,12 +94,16 @@ public class PlayerData {
         this.ash = ash;
     }
 
-    public Inventory getInventory() {
-        return inventory;
+    public void addAsh(int amount) {
+        this.ash += amount;
     }
 
-    public void setInventory(Inventory inventory) {
-        this.inventory = inventory;
+    public void removeAsh(int amount) {
+        setAsh(this.ash - amount);
+    }
+
+    public Inventory getInventory() {
+        return inventory;
     }
 
     public Word getCurrentWord() {
@@ -97,6 +112,18 @@ public class PlayerData {
 
     public void setCurrentWord(Word currentWord) {
         this.currentWord = currentWord;
+    }
+
+    public int getLettersUntilExtraAsh() {
+        return lettersUntilExtraAsh;
+    }
+
+    public void setLettersUntilExtraAsh(int lettersUntilExtraAsh) {
+        this.lettersUntilExtraAsh = lettersUntilExtraAsh;
+    }
+
+    public void decrementLettersUntilExtraAsh(int amount) {
+        this.lettersUntilExtraAsh -= amount;
     }
 
     // Override equals and hashCode to "fix" comparison:
@@ -109,5 +136,48 @@ public class PlayerData {
     @Override
     public int hashCode() {
         return this.email.hashCode();
+    }
+
+
+
+
+
+
+
+    // And the inventory class, which can reliably stay in here.
+    public class Inventory {
+        private int[] letterCounts;
+
+        public Inventory() {
+            letterCounts = new int[26];
+        }
+
+        public boolean addLetter(Letter letter, int capacity) {
+            int index = letter.ordinal();
+            if (letterCounts[index] < capacity) {
+                letterCounts[index]++;
+                return true;
+            }
+            else return false;
+        }
+
+        public boolean removeLetter(Letter letter) {
+            return removeLetter(letter, 1); // Auto-assume removal of 1 letter by default
+        }
+
+        public boolean removeLetter(Letter letter, int amountToRemove) {
+            int index = letter.ordinal();
+            if (letterCounts[index] - amountToRemove >= 0) {
+                letterCounts[index] -= amountToRemove;
+                return true;
+            }
+            else return false;
+        }
+
+        public int[] getLetterCounts() {
+            return letterCounts;
+        }
+
+
     }
 }

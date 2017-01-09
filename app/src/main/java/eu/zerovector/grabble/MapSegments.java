@@ -43,7 +43,7 @@ public class MapSegments {
     }
 
     private void InitSegments() {
-        // Find out how many segments we need by converting the total distance to metres openers. We can cast the doubles
+        // Find out how many segments we need by converting the total distance to metres first. We can cast the doubles
         // to ints, because we want the segments to be as large as possible, and as few as possible => always FLOOR
         // Actual game area is about 507x400 metres, by the way.
         numLatSegments = (int)(SphericalUtil.computeDistanceBetween(

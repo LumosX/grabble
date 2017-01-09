@@ -1,6 +1,7 @@
 package eu.zerovector.grabble;
 
 import android.content.Context;
+import android.widget.Toast;
 
 import com.arasthel.asyncjob.AsyncJob;
 import com.google.android.gms.maps.model.LatLng;
@@ -18,6 +19,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,28 +32,13 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 // A static class that shall hold all core gameplay data and helper functions
 public final class Game {
-    // Again, we're using a singleton and a final class without an interface, because Java is terrible
-    private static Game instance;
-    // Oh, how I wish C# properties existed here...
-    private static Game getInstance() {
-        if (instance == null) instance = new Game();
-        return instance;
-    }
-    private Game() {
-        // This will trigger only once, upon generating the singleton instance.
-        // Ergo, we can make sure the game knows when it's actually ready to do things
-        isDictLoaded = false;
-        isMapDataLoaded = false;
-    }
 
     // HARDCODED GAME CONSTANTS
     public static final int GLOBAL_ACTIVITY_RESULT_KILL = 0;
     public static final int GLOBAL_ACTIVITY_RESULT_LOGOUT = 1;
 
-    // The radius that we'll be GRABBLE-ing letters at.
-    public static final double LETTER_GRABBING_DISTANCE = 6.0;
-    public static final double LETTER_SEEING_DISTANCE = 15.0;
-
+    // UI UPDATE LISTENERS
+    private static List<UpdateUIListener> uiListeners = new ArrayList<>();
 
     // And the actual data representation of the player that's currently logged in
     private static PlayerData currentPlayer;
@@ -128,72 +115,131 @@ public final class Game {
     }
 
     // This needs to be asynchronous, for obvious reasons
-    public static void InitialSetup(final Context appContext) {
-        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+    private static final String INIT_RESULT_SUCCESS = "SUCCESS";
+    public static void InitialSetup(final Context appContext, final int intialDelaySeconds) {
+        new AsyncJob.AsyncJobBuilder<InitResult>().doInBackground(new AsyncJob.AsyncAction<InitResult>() {
+            private int initialDelay = intialDelaySeconds;
+
             @Override
-            public Boolean doAsync() {
-                boolean result = true;
+            public InitResult doAsync() {
+                // Do the delaying if need be.
+                if (initialDelay > 0) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 // READ DICTIONARY FILE
-                // File's in the 'raw' folder, so let's get it up
-                InputStream dictInput = appContext.getResources().openRawResource(DICT_RES_NAME);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(dictInput));
-                // We'll set the list of words up, and the list of word values as well
+                boolean dictOK = true;
+                String dictError = "";
+                if (!isDictLoaded) {
+                    // File's in the 'raw' folder, so let's get it up
+                    InputStream dictInput = appContext.getResources().openRawResource(DICT_RES_NAME);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(dictInput));
+                    // We'll set the list of words up, and the list of word values as well
 
-                try {
-                    // Using our fabulous custom-made class, we can simply add all words to the "global" GrabbleDict.
-                    // It uses a HashMap, allegedly guaranteeing that duplicates are removed.
-                    grabbleDict = new GrabbleDict();
-                    String line = "";
-                    while ((line = reader.readLine()) != null) {
-                        grabbleDict.addWord(new Word(line.toUpperCase()));
+                    try {
+                        // Using our fabulous custom-made class, we can simply add all words to the "global" GrabbleDict.
+                        // It uses a HashMap, allegedly guaranteeing that duplicates are removed.
+                        grabbleDict = new GrabbleDict();
+                        String line = "";
+                        while ((line = reader.readLine()) != null) {
+                            grabbleDict.addWord(new Word(line.toUpperCase()));
+                        }
+                    } catch (Exception e) {
+                        dictOK = false; // Make sure we know something's broken
+                        dictError = e.getMessage();
                     }
-                } catch (Exception ex) {
-                    result = false; // Make sure we know something's broken
                 }
 
                 // DOWNLOAD AND PARSE THE DAILY MAP
-                dailyMap = new ArrayList<>();
-                try {
-                    // Must find out what day of the week it is, ergo what file we're looking for
-                    URL url = new URL(getDailyMapURL());
-                    URLConnection conn = url.openConnection();
-                    conn.connect();
-                    // Do the actual downloading
-                    InputStream mapInput = new BufferedInputStream(url.openStream(), 8192);
-                    // Parse the stream into nodes
-                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder builder = factory.newDocumentBuilder();
-                    Document doc = builder.parse(mapInput);
-                    // Real XML
-                    ParseXML(doc);
-                    // Remember to close the stream in the end
-                    mapInput.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    result = false;
+                boolean mapDataOK = true;
+                String mapDataError = "";
+                if (!isMapDataLoaded) {
+                    dailyMap = new ArrayList<>();
+                    try {
+                        // Must find out what day of the week it is, ergo what file we're looking for
+                        URL url = new URL(getDailyMapURL());
+                        URLConnection conn = url.openConnection();
+                        conn.connect();
+                        // Do the actual downloading
+                        InputStream mapInput = new BufferedInputStream(url.openStream(), 8192);
+                        // Parse the stream into nodes
+                        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                        DocumentBuilder builder = factory.newDocumentBuilder();
+                        Document doc = builder.parse(mapInput);
+                        // Real XML
+                        ParseXML(doc);
+                        // Remember to close the stream in the end
+                        mapInput.close();
+                    } catch (Exception e) {
+                        mapDataOK = false;
+                        mapDataError = e.getMessage();
+                    }
                 }
 
                 // DONE
-                return result;
+                return new InitResult(dictOK, mapDataOK, dictError, mapDataError);
             }
-        }).doWhenFinished(new AsyncJob.AsyncResultAction<Boolean>() {
+        }).doWhenFinished(new AsyncJob.AsyncResultAction<InitResult>() {
             @Override
-            public void onResult(Boolean result) {
-                // The game now knows its dictionary and map have been loaded without issues
-                if (result) {
+            public void onResult(InitResult result) {
+                // Just call the thing that happens when the data loads
+                onDataLoaded(result);
 
-                    // Just call the thing that happens when the data loads
-                    onDataLoaded();
+                // If something went wrong, try again in a bit.
+                if (!result.bothOK()) {
+                    InitialSetup(appContext, 3000);
 
-                    //Toast.makeText(appContext, "game dict size = " + grabbleDict.size() +
-                    //        "\ntotal ash possible = " + grabbleDict.totalAshValue(), Toast.LENGTH_LONG).show();
-                    //Toast.makeText(appContext, "min, max LAT = " + minLat + "; " + maxLat +
-                    //                "\nmin, max LON = " + minLon + "; " + maxLon, Toast.LENGTH_LONG).show();
+                    if (!result.mapDataOK()) {
+                        Toast.makeText(appContext, "Failed to load map data: " + result.mapDataErrorMessage() +
+                                                   "\nRetrying in 3 sec.", Toast.LENGTH_LONG).show();
+                    }
+                    else if (!result.dictOK()) {
+                        Toast.makeText(appContext, "Failed to load dictionary: " + result.dictErrorMessage() +
+                                                   "\nRetrying in 3 sec.", Toast.LENGTH_LONG).show();
+                    }
                 }
-                // else TODO: Throw massive errors in a dialog box, quit application
             }
         }).create().start();
+    }
+
+    // I'd rather use one of these
+    private static class InitResult {
+        private boolean dictOK;
+        private boolean mapDataOK;
+        private String dictErrorMessage;
+        private String mapDataErrorMessage;
+
+        public InitResult(boolean dictOK, boolean mapDataOK, String dictErrorMessage, String mapDataErrorMessage) {
+            this.dictOK = dictOK;
+            this.mapDataOK = mapDataOK;
+            this.dictErrorMessage = dictErrorMessage;
+            this.mapDataErrorMessage = mapDataErrorMessage;
+        }
+        public boolean dictOK() {
+            return dictOK;
+        }
+        public boolean mapDataOK() {
+            return mapDataOK;
+        }
+
+        public String mapDataErrorMessage() {
+            return mapDataErrorMessage;
+        }
+
+        public String dictErrorMessage() {
+            return dictErrorMessage;
+        }
+
+        public boolean bothOK() {
+            return dictOK && mapDataOK;
+        }
+        public boolean bothNotOK() {
+            return !bothOK();
+        }
     }
 
     // A little helper.
@@ -247,7 +293,7 @@ public final class Game {
             //Log.e("tag", "Lon diff = " + SphericalUtil.computeDistanceBetween(new LatLng(minLat, minLon), new LatLng(minLat, maxLon)));
             //Log.e("tag", "Lat diff = " + SphericalUtil.computeDistanceBetween(new LatLng(minLat, minLon), new LatLng(maxLat, minLon)));
 
-            // Unfortunately, we'll have to loop through all placemarks a closers time in order to have already calculated the bounds.
+            // Unfortunately, we'll have to loop through all placemarks a second time in order to have already calculated the bounds.
             unsegmentedPlacemarks.put(parsedID, new Placemark(parsedID, Letter.fromChar(pointLetter), latitude, longitude, 0));
         }
         // After knowing the bounds of the game area, add a little margin to help with any possible floating point imprecision issues
@@ -293,9 +339,9 @@ public final class Game {
     }
 
     // To be called once we're sure EVERYTHING is good.
-    private static void onDataLoaded() {
-        isDictLoaded = true;
-        isMapDataLoaded = true;
+    private static void onDataLoaded(InitResult result) {
+        isDictLoaded = result.dictOK;
+        isMapDataLoaded = result.mapDataOK;
 
         // if the player managed to login before the data loads, check whether he/she needs a new word
         if (isPlayerLoggedIn) checkRequestNewWord();
@@ -307,8 +353,10 @@ public final class Game {
         if (!isDictLoaded) return;
 
         // We need to see if the current word has been completed, and reassign a new word if necessary
-        Word oldWord = currentPlayerData().getCurrentWord();
+        Word oldWord = currentPlayer.getCurrentWord();
         if (oldWord == null || oldWord.isComplete()) {
+            // TODO CHECK FACTION LIST FOR UNCOMPLETED WORDS
+            // Network.GetIncompleteWordIndices();
             Iterator iter = grabbleDict.entrySet().iterator(); // This iterator stuff is bizarre
             List<Word> words = new ArrayList<>();
             while (iter.hasNext()) {
@@ -317,15 +365,73 @@ public final class Game {
                 if (!(boolean)pair.getValue()) words.add((Word)pair.getKey());
             }
             // Get a random word and assign it as the new one
-            currentPlayerData().setCurrentWord(words.get(new Random(System.currentTimeMillis()).nextInt(words.size())));
+            currentPlayer.setCurrentWord(words.get(new Random(System.currentTimeMillis()).nextInt(words.size())));
         }
 
 
     }
 
-    public static void onPlayerLetterCompleted() {
+    // This is called whenever we approach a letter within grabbing distance and try to take it.
+    public static boolean grabLetter(Letter letter, Experience.DataPair extraDetails) {
+        boolean result = false;
 
+        Experience.LevelDetails levelDetails = extraDetails.levelDetails();
+        Experience.TraitSet perks = extraDetails.traitSet();
 
+        // Try completing a letter in the current word first
+        if (currentPlayer.getCurrentWord().completeLetter(letter)) {
+            result = true;
+        }
+        // Otherwise, add to inventory
+        else if (currentPlayer.getInventory().addLetter(letter, perks.getInvCapacity())) {
+            result = true;
+        }
+
+        // If something about the player changed, force an UI update, plus other things
+        if (result) {
+            // We're using one of these to notify the listeners of anything specific they need to be doing
+            EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
+
+            // First, check to see whether the player requires an extra ash
+            int letForAsh = currentPlayer.getLettersUntilExtraAsh() - 1; // decrement automatically
+            if (letForAsh == 0) {
+                currentPlayer.addAsh(1);
+                currentPlayer.setLettersUntilExtraAsh(perks.getNumLettersForOneAsh());
+                updateCodes.add(UpdateUIListener.Code.EXTRA_ASH_GRANTED);
+            }
+
+            // If we've completed a word, grant XP
+            if (currentPlayer.getCurrentWord().isComplete()) {
+                int oldXP = currentPlayer.getXP();
+                int bonusXP = currentPlayer.getCurrentWord().ashValue(); // "ash value" is actually "XP value", but whatever
+                currentPlayer.addXP(bonusXP);
+                updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
+                // TODO FLAG WORD AS COMPLETED IN FACTION
+                checkRequestNewWord();
+
+                // And finally, if we've levelled up, grant the extra ash reward (if there is one)
+                if (oldXP + bonusXP >= levelDetails.nextLevelXP()) {
+                    // We need to get the traitSet for the next level in order to find out how much ash it gives us
+                    int ashReward = Experience.getPerksForLevel(levelDetails.level() + 1).getRawAshReward();
+                    currentPlayer.addAsh(ashReward);
+                    updateCodes.add(UpdateUIListener.Code.LEVEL_INCREASED);
+                }
+            }
+
+            // Always force a global update of any interface listeners
+            callGlobalUIUpdate(updateCodes);
+        }
+        return result;
+    }
+
+    public static void addUIListener(UpdateUIListener listener) {
+        uiListeners.add(listener);
+    }
+
+    private static void callGlobalUIUpdate(EnumSet<UpdateUIListener.Code> codes) {
+        for (UpdateUIListener listener : uiListeners) {
+            listener.onUpdateUIReceived(codes);
+        }
     }
 
 

@@ -23,4 +23,5 @@ public class FactionData {
         members = new LinkedList<>();
         members.add(creatorName); // The leader auto-joins the faction when it's created (upon him registering)
     }
+
 }

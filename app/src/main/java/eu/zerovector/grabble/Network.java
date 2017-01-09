@@ -5,17 +5,6 @@ import java.util.List;
 
 // A static class that shall hold all network-related functionality.
 public final class Network {
-    // We'll make a singleton, because this stupid language neither allows me to define
-    // static methods in interfaces, nor does it allow me to use them here...
-    // I wanted to use an interface like a human being, but I guess I won't...
-    private static Network instance;
-    private Network() { } // Anti-instantiation measures
-    // There also aren't any implicit properties in this language. Really? I need to use a get* method? Pffft.
-    private static Network getInstance() {
-        if (instance == null) instance = new Network();
-        return instance;
-    }
-
     // TODO: maintain list of network requests (also send System.currentTimeMillis() as request ID)
     // TODO: lots and lots of stuff
 
@@ -87,10 +76,19 @@ public final class Network {
     }
 
 
-    // This is called upon ACTUALLY grabbing a letter.
-    public static void DoLetterGrab(List<Integer> pointIDs) {
+    // This is called upon taking some letters. We need the server to remove them from the player's list.
+    public static void RequestLetterGrab(List<Integer> pointIDs) {
         return;
     }
+
+    public static void CompleteWord(Word completedWord) {
+        // TODO NOTIFY FACTION THAT A WORD HAS BEEN COMPLETED
+    }
+
+    public static int[] GetIncompleteWordIndices() {
+        return new int[]{};
+    }
+
 }
 
 

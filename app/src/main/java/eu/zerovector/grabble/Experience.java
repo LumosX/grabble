@@ -62,15 +62,15 @@ public final class Experience {
     public static LevelDetails getLevelDetailsForXP(int curXP) {
         // We can use Arrays.binarySearch to find either a value from the array, or the "insertion point".
         // See the docs for info.
-        if (curXP < XP_FOR_FIRST_LEVEL) return new LevelDetails(0, XP_FOR_FIRST_LEVEL);
-        if (curXP >= XP_FOR_MAX_LEVEL) return new LevelDetails(MAX_LEVEL, XP_FOR_MAX_LEVEL);
+        if (curXP < XP_FOR_FIRST_LEVEL) return new LevelDetails(0, 0, XP_FOR_FIRST_LEVEL);
+        if (curXP >= XP_FOR_MAX_LEVEL) return new LevelDetails(MAX_LEVEL, 0, XP_FOR_MAX_LEVEL); // make sure the rank100 counter is always full
         int result = Collections.binarySearch(XP_REQUIREMENTS_FOR_LEVEL, curXP); // we're using an ArrayList, so it's all good
         // If we're exactly at the XP for some level, we'll get that value. We need the next one.
-        if (result >= 0) return new LevelDetails(result + 1, XP_REQUIREMENTS_FOR_LEVEL.get(result + 1));
+        if (result >= 0) return new LevelDetails(result + 1, XP_REQUIREMENTS_FOR_LEVEL.get(result), XP_REQUIREMENTS_FOR_LEVEL.get(result + 1));
         // Otherwise, we've got: -(insertionPoint)-1, which also needs to be additionally offset by 1
         else {
             result = -result + 2;
-            return new LevelDetails(result, XP_REQUIREMENTS_FOR_LEVEL.get(result));
+            return new LevelDetails(result, XP_REQUIREMENTS_FOR_LEVEL.get(result-1), XP_REQUIREMENTS_FOR_LEVEL.get(result));
         }
     }
 
@@ -79,15 +79,20 @@ public final class Experience {
     // This language sucks massive dongs, y'know.
     public static class LevelDetails {
         private int level;
+        private int thisLevelXP;
         private int nextLevelXP;
 
-        public LevelDetails(int level, int nextLevelXP) {
+        public LevelDetails(int level, int thisLevelXP, int nextLevelXP) {
             this.level = level;
+            this.thisLevelXP = thisLevelXP;
             this.nextLevelXP = nextLevelXP;
         }
 
         public int level() {
             return level;
+        }
+        public int thisLevelXP() {
+            return thisLevelXP;
         }
         public int nextLevelXP() {
             return nextLevelXP;
@@ -99,7 +104,7 @@ public final class Experience {
 
     // ============== LEVEL-UP BOONS
     private static final ArrayList<TraitSet> LEVEL_PERKS;
-    private static final TraitSet BASE_PERKS = new TraitSet(6, 15, 5, 6, 0);
+    public static final TraitSet BASE_PERKS = new TraitSet(6, 15, 5, 6, 0);
     // Second static block: Init XP-by-level list using l337 maths
     static {
         // So. We need to have a traitSet for every level, but we're too smart to declare them by hand.
@@ -121,7 +126,7 @@ public final class Experience {
         //
         // At level 100, to celebrate max rank, we further increase Sight by 25 metres, Grab by 10 metres, and Inv by 10 slots.
         // Final totals at rank 100: Sight 100 metres, Grab 50 metres, Inventory 20 slots, and every letter = 1 extra Ash.
-        // The lookup table needs to be implemented in reverse, with the strongest bonuses openers.
+        // The lookup table needs to be implemented in reverse, with the strongest bonuses first.
         LEVEL_PERKS = new ArrayList<>(MAX_LEVEL+1);
         // Level 0 and level 100 are easy.
         LEVEL_PERKS.add(0, BASE_PERKS);
@@ -186,6 +191,29 @@ public final class Experience {
         return LEVEL_PERKS.get(level);
     }
 
+    public static DataPair getAllDetailsForXP(int curXP) {
+        // we're getting the LevelDetails anyways, so...
+        LevelDetails det = getLevelDetailsForXP(curXP);
+        return new DataPair(det, LEVEL_PERKS.get(det.level));
+    }
+
+    // The alternative was to use "Pair<Experience.LevelDetails, Experience.TraitSet>", which was way too sodding long and shitty
+    // I'm starting to get really annoyed at everything
+    public static class DataPair {
+        private LevelDetails det;
+        private TraitSet tra;
+        public DataPair(LevelDetails details, TraitSet perks) {
+            this.det = details;
+            this.tra = perks;
+        }
+        public LevelDetails levelDetails() {
+            return det;
+        }
+        public TraitSet traitSet() {
+            return tra;
+        }
+    }
+
     // This class holds auxiliary values that may change with player level
     // I wanted to shoehorn the "Builder" pattern somewhere, but that ended up not happening
     public static class TraitSet {
@@ -214,11 +242,12 @@ public final class Experience {
             return grabRange;
         }
 
-        public void addGrabRange(int range) {
+        // Setters shall be private, given that all the setting is done in the master-class
+        private void addGrabRange(int range) {
             this.grabRange += range;
         }
 
-        public void setGrabRange(int grabRange) {
+        private void setGrabRange(int grabRange) {
             this.grabRange = grabRange;
         }
 
@@ -226,11 +255,11 @@ public final class Experience {
             return sightRange;
         }
 
-        public void addSightRange(int range) {
+        private void addSightRange(int range) {
             this.sightRange += range;
         }
 
-        public void setSightRange(int sightRange) {
+        private void setSightRange(int sightRange) {
             this.sightRange = sightRange;
         }
 
@@ -238,11 +267,11 @@ public final class Experience {
             return invCapacity;
         }
 
-        public void addInvCapacity(int extraCapacity) {
+        private void addInvCapacity(int extraCapacity) {
             this.invCapacity += extraCapacity;
         }
 
-        public void setInvCapacity(int invCapacity) {
+        private void setInvCapacity(int invCapacity) {
             this.invCapacity = invCapacity;
         }
 
@@ -251,11 +280,11 @@ public final class Experience {
             return numLettersForOneAsh;
         }
 
-        public void reduceNumLettersForOneAsh(int delta) {
+        private void reduceNumLettersForOneAsh(int delta) {
             this.numLettersForOneAsh -= delta;
         }
 
-        public void setNumLettersForOneAsh(int amount) {
+        private void setNumLettersForOneAsh(int amount) {
             this.numLettersForOneAsh = amount;
         }
 
@@ -263,7 +292,7 @@ public final class Experience {
             return rawAshReward;
         }
 
-        public void setRawAshReward(int amount) {
+        private void setRawAshReward(int amount) {
             this.rawAshReward = amount;
         }
     }

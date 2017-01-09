@@ -1,8 +1,10 @@
 package eu.zerovector.grabble;
 
+import android.animation.ArgbEvaluator;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,10 +18,11 @@ import com.github.lzyzsd.circleprogress.ArcProgress;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 // Fragment for the real collection screen.
-public class CollectionScreen extends Fragment {
+public class CollectionScreen extends Fragment implements UpdateUIListener {
 
     public CollectionScreen() { }
     public static CollectionScreen newInstance() {
@@ -67,7 +70,11 @@ public class CollectionScreen extends Fragment {
         lblCurrentSightRange = (TextView)view.findViewById(R.id.lblCurrentSightRange);
         tblLetters = (TableLayout)view.findViewById(R.id.tblLetters);
 
-        Game.currentPlayerData().setXP(4400);
+        // Link up to the Game class
+        Game.addUIListener(this);
+
+        // debug
+        //Game.currentPlayerData().setXP(300);
 
         // We can set the name up here - after all, the player's name never changes.
         lblPlayerName.setText(Game.currentPlayerData().getUsername());
@@ -87,7 +94,7 @@ public class CollectionScreen extends Fragment {
         Experience.LevelDetails levelStats = Experience.getLevelDetailsForXP(curXP);
         lblCurrentXP.setText(curXP + "/" + levelStats.nextLevelXP());
         lblCurrentRank.setText(String.valueOf(levelStats.level()));
-        int progress = (int)((double)curXP/(double)levelStats.nextLevelXP() * 100);
+        int progress = (int)((double)(curXP-levelStats.thisLevelXP())/(double)levelStats.nextLevelXP() * 100);
         progress = clampInt(progress, 0, 100);
         prbExperience.setProgress(progress);
         // and rank name
@@ -101,11 +108,11 @@ public class CollectionScreen extends Fragment {
 
         // NOW THE TABLE WITH ALL THE LETTERS IN
         // This took me absolute bloody ages to make sort of right...
-        // Clear the table openers.
+        // Clear the table first.
         tblLetters.removeAllViews();
         // Grab all the things.
         int[] letterCountsInts = Game.currentPlayerData().getInventory().getLetterCounts();
-        int letterCapacity = Game.currentPlayerData().getInventory().getCapacity();
+        int letterCapacity = perks.getInvCapacity();
         // We need to split them in two and pair them up, and this language is complete trash
         List<String> vals = new ArrayList<>();
         List<String> counts = new ArrayList<>();
@@ -148,6 +155,13 @@ public class CollectionScreen extends Fragment {
                 if (itemIndex < vals.size()) {
                     lblLetterVal.setText(vals.get(itemIndex));
                     lblLetterCount.setText(counts.get(itemIndex));
+                    // Set colours based on count ratio
+                    int start = ContextCompat.getColor(getActivity(), R.color.UI_DarkGrey);
+                    int end = 0xffffff; // White. No need to call anything if we know the code for 'white', right?
+                    float ratio = (float)letterCountsInts[itemIndex] / letterCapacity;
+                    int curColour = (int)new ArgbEvaluator().evaluate(ratio, start, end);
+                    lblLetterVal.setTextColor(curColour);
+                    lblLetterCount.setTextColor(curColour);
                 }
                 // Otherwise simply set fields to empty text (cell number per row must be preserved)
                 else {
@@ -166,5 +180,8 @@ public class CollectionScreen extends Fragment {
         else return val;
     }
 
-
+    @Override
+    public void onUpdateUIReceived(EnumSet<Code> codes) {
+        updateViews();
+    }
 }

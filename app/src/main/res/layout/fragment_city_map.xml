@@ -20,6 +20,25 @@
         android:textSize="36sp"
         android:gravity="center" />
 
+    <ProgressBar
+        style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_alignTop="@+id/mapViewComponent"
+        android:layout_marginTop="-3dp"
+        android:progress="44"
+        android:progressDrawable="@drawable/layout_progressbar_experience"
+        android:id="@+id/pbExperience" />
+
+    <ProgressBar
+        style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_alignBottom="@+id/mapViewComponent"
+        android:layout_marginBottom="-2dp"
+        android:progress="44"
+        android:id="@+id/pbLettersForAsh" />
+
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapViewComponent"
         android:layout_width="match_parent"

@@ -11,7 +11,7 @@ public final class RandomNameGenerator {
 
     // It'll be like an LL-1 grammar, sort of. Fun stuff.
 
-    // Closers openers. The closers are the good guys, so we're placing lots of "goody" references for them.
+    // Closers first. The closers are the good guys, so we're placing lots of "goody" references for them.
     private static final String[] closersPrefixes = {"The Most", "Utmost"}; // optional, determined by RNG
     private static final String[] closersTier1 = {"[p] Sacred [2]", "[p] Hallowed [2]", "[p] Honoured [2]", "[p] Holy [2]",
                                                   "[p] Blessed [2]", "[p] Exalted [2]", "Consecrated [2]", "Royal [2]",
