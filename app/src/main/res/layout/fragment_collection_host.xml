@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Black"
-    tools:context="eu.zerovector.grabble.CollectionHost">
+    tools:context="eu.zerovector.grabble.Activity.Fragment.CollectionHost">
 
     <fr.castorflex.android.verticalviewpager.VerticalViewPager
         android:id="@+id/verticalViewPager"

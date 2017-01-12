@@ -3,6 +3,11 @@ package eu.zerovector.grabble;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.zerovector.grabble.Data.Alignment;
+import eu.zerovector.grabble.Data.FactionData;
+import eu.zerovector.grabble.Data.PlayerData;
+import eu.zerovector.grabble.Data.Word;
+
 // A static class that shall hold all network-related functionality.
 public final class Network {
     // TODO: maintain list of network requests (also send System.currentTimeMillis() as request ID)

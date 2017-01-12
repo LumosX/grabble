@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Black"
-    tools:context="eu.zerovector.grabble.CityMap">
+    tools:context="eu.zerovector.grabble.Activity.Fragment.CityMap">
 
     <TextView
         android:text="THE CITY"
@@ -26,7 +26,7 @@
         android:layout_height="2dp"
         android:layout_alignTop="@+id/mapViewComponent"
         android:layout_marginTop="-3dp"
-        android:progress="44"
+        android:progress="0"
         android:progressDrawable="@drawable/layout_progressbar_experience"
         android:id="@+id/pbExperience" />
 
@@ -35,8 +35,8 @@
         android:layout_width="match_parent"
         android:layout_height="2dp"
         android:layout_alignBottom="@+id/mapViewComponent"
-        android:layout_marginBottom="-2dp"
-        android:progress="44"
+        android:layout_marginBottom="-3dp"
+        android:progress="0"
         android:id="@+id/pbLettersForAsh" />
 
     <com.google.android.gms.maps.MapView
@@ -55,6 +55,17 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10sp"
         android:id="@+id/lblCurrentWord"
+        android:textSize="28sp"
+        android:textColor="@color/White"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="WWWWWWW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10sp"
+        android:id="@+id/lblCurrentWordAux"
         android:textSize="28sp"
         android:textColor="@color/White"
         android:layout_alignParentTop="true"

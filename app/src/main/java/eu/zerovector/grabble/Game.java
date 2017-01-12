@@ -1,6 +1,7 @@
 package eu.zerovector.grabble;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.arasthel.asyncjob.AsyncJob;
@@ -29,6 +30,17 @@ import java.util.TreeMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import eu.zerovector.grabble.Activity.UpdateUIListener;
+import eu.zerovector.grabble.Data.Alignment;
+import eu.zerovector.grabble.Data.Experience;
+import eu.zerovector.grabble.Data.GrabbleDict;
+import eu.zerovector.grabble.Data.Letter;
+import eu.zerovector.grabble.Data.MapSegments;
+import eu.zerovector.grabble.Data.Placemark;
+import eu.zerovector.grabble.Data.PlayerData;
+import eu.zerovector.grabble.Data.Word;
+import eu.zerovector.grabble.Utils.RandomNameGenerator;
 
 // A static class that shall hold all core gameplay data and helper functions
 public final class Game {
@@ -144,7 +156,7 @@ public final class Game {
                         // Using our fabulous custom-made class, we can simply add all words to the "global" GrabbleDict.
                         // It uses a HashMap, allegedly guaranteeing that duplicates are removed.
                         grabbleDict = new GrabbleDict();
-                        String line = "";
+                        String line;
                         while ((line = reader.readLine()) != null) {
                             grabbleDict.addWord(new Word(line.toUpperCase()));
                         }
@@ -191,15 +203,16 @@ public final class Game {
 
                 // If something went wrong, try again in a bit.
                 if (!result.bothOK()) {
-                    InitialSetup(appContext, 3000);
+                    int retry_delay_seconds = 10;
+                    InitialSetup(appContext, retry_delay_seconds * 1000);
 
                     if (!result.mapDataOK()) {
                         Toast.makeText(appContext, "Failed to load map data: " + result.mapDataErrorMessage() +
-                                                   "\nRetrying in 3 sec.", Toast.LENGTH_LONG).show();
+                                                   "\n(Retrying in " + retry_delay_seconds + " sec.)", Toast.LENGTH_LONG).show();
                     }
                     else if (!result.dictOK()) {
                         Toast.makeText(appContext, "Failed to load dictionary: " + result.dictErrorMessage() +
-                                                   "\nRetrying in 3 sec.", Toast.LENGTH_LONG).show();
+                                                   "\n(Retrying in " + retry_delay_seconds + " sec)", Toast.LENGTH_LONG).show();
                     }
                 }
             }
@@ -266,9 +279,6 @@ public final class Game {
         double minLat = Double.NaN, maxLat = Double.NaN;
         double minLon = Double.NaN, maxLon = Double.NaN;
 
-        double offsetLat = 58.8618902 - 55.94478;
-        double offsetLon = 5.7836856 + 3.1883597;
-
         // Parse the actual thing, without segmenting it yet.
         // Using a sorted map for this step allows us to order points by ID and remove any potential erroneous duplicates.
         SortedMap<Integer, Placemark> unsegmentedPlacemarks = new TreeMap<>();
@@ -281,8 +291,8 @@ public final class Game {
             String[] pointCoords = point.getElementsByTagName("coordinates").item(0).getTextContent().split(","); // "LNG,LAT,0"
             // Now we ought to finish the parsing
             int parsedID = Integer.parseInt(pointID.split(" ")[1]);
-            double latitude = Double.parseDouble(pointCoords[1]) + offsetLat;
-            double longitude = Double.parseDouble(pointCoords[0]) + offsetLon;
+            double latitude = Double.parseDouble(pointCoords[1]);
+            double longitude = Double.parseDouble(pointCoords[0]);
             // Whilst we're here, we should calculate the "bounds" of all placemarks, so to speak, so that we know what area the "zone" spans
             if (Double.isNaN(minLat) || minLat > latitude) minLat = latitude;
             if (Double.isNaN(maxLat) || maxLat < latitude) maxLat = latitude;
@@ -387,50 +397,58 @@ public final class Game {
             result = true;
         }
 
+        if (!result) return false;
+
+
         // If something about the player changed, force an UI update, plus other things
-        if (result) {
-            // We're using one of these to notify the listeners of anything specific they need to be doing
-            EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
+        // We're using one of these to notify the listeners of anything specific they need to be doing
+        EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
+        // And we'll need this one too - getting it after any letters have been added
+        Word oldWord = currentPlayer.getCurrentWord();
 
-            // First, check to see whether the player requires an extra ash
-            int letForAsh = currentPlayer.getLettersUntilExtraAsh() - 1; // decrement automatically
-            if (letForAsh == 0) {
-                currentPlayer.addAsh(1);
-                currentPlayer.setLettersUntilExtraAsh(perks.getNumLettersForOneAsh());
-                updateCodes.add(UpdateUIListener.Code.EXTRA_ASH_GRANTED);
-            }
-
-            // If we've completed a word, grant XP
-            if (currentPlayer.getCurrentWord().isComplete()) {
-                int oldXP = currentPlayer.getXP();
-                int bonusXP = currentPlayer.getCurrentWord().ashValue(); // "ash value" is actually "XP value", but whatever
-                currentPlayer.addXP(bonusXP);
-                updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
-                // TODO FLAG WORD AS COMPLETED IN FACTION
-                checkRequestNewWord();
-
-                // And finally, if we've levelled up, grant the extra ash reward (if there is one)
-                if (oldXP + bonusXP >= levelDetails.nextLevelXP()) {
-                    // We need to get the traitSet for the next level in order to find out how much ash it gives us
-                    int ashReward = Experience.getPerksForLevel(levelDetails.level() + 1).getRawAshReward();
-                    currentPlayer.addAsh(ashReward);
-                    updateCodes.add(UpdateUIListener.Code.LEVEL_INCREASED);
-                }
-            }
-
-            // Always force a global update of any interface listeners
-            callGlobalUIUpdate(updateCodes);
+        // First, check to see whether the player requires an extra ash
+        int letForAsh = currentPlayer.getLettersUntilExtraAsh() - 1; // decrement automatically
+        currentPlayer.decrementLettersUntilExtraAsh(1);
+        if (letForAsh == 0) {
+            currentPlayer.addAsh(1);
+            currentPlayer.setLettersUntilExtraAsh(perks.getNumLettersForOneAsh());
+            updateCodes.add(UpdateUIListener.Code.EXTRA_ASH_GRANTED);
         }
-        return result;
+
+        // Get XP with every letter. People like seeing progress, as tiny as it may be.
+        int oldXP = currentPlayer.getXP();
+        currentPlayer.addXP(letter.getAshCreateValue());
+
+        // If we've completed a word, grant the value of the word as an Ash reward
+        if (currentPlayer.getCurrentWord().isComplete()) {
+            updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
+            currentPlayer.addAsh(currentPlayer.getCurrentWord().ashValue());
+            // TODO FLAG WORD AS COMPLETED IN FACTION
+            checkRequestNewWord();
+        }
+
+        // And finally, if we've levelled up, grant the extra ash reward (if there is one)
+        if (oldXP + letter.getAshCreateValue() >= levelDetails.nextLevelXP()) {
+            // We need to get the traitSet for the next level in order to find out how much ash it gives us
+            int ashReward = Experience.getPerksForLevel(levelDetails.level() + 1).getRawAshReward();
+            currentPlayer.addAsh(ashReward);
+            updateCodes.add(UpdateUIListener.Code.LEVEL_INCREASED);
+        }
+
+
+        // Always force a global update of any interface listeners
+        Log.d("GAME", "update codes are" + updateCodes.toString());
+        callGlobalUIUpdate(updateCodes, oldWord);
+        return true;
     }
 
     public static void addUIListener(UpdateUIListener listener) {
         uiListeners.add(listener);
     }
 
-    private static void callGlobalUIUpdate(EnumSet<UpdateUIListener.Code> codes) {
+    private static void callGlobalUIUpdate(EnumSet<UpdateUIListener.Code> codes, Word oldWord) {
         for (UpdateUIListener listener : uiListeners) {
-            listener.onUpdateUIReceived(codes);
+            listener.onUpdateUIReceived(codes, oldWord);
         }
     }
 

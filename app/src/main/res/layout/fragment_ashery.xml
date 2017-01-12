@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Black"
-    tools:context="eu.zerovector.grabble.Ashery">
+    tools:context="eu.zerovector.grabble.Activity.Fragment.Ashery">
 
     <TextView
         android:text="ASHERY"
