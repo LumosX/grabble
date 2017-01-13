@@ -277,7 +277,6 @@ public final class Experience {
             this.invCapacity = invCapacity;
         }
 
-
         public int getNumLettersForOneAsh() {
             return numLettersForOneAsh;
         }
@@ -334,7 +333,7 @@ public final class Experience {
         };                                            // I'm supposed to be on vacation right now...
         int index = 0;
         for (String namePair : tierNames) {
-            String[] pair = namePair.split("\uD83D\uDCA9");
+            String[] pair = namePair.split("\uD83D\uDCA9"); // Never would've thought splitting the 💩 would work
             specialNames.put(index, new LevelTierNamePair(pair[0], pair[1]));
             index += 5;
         }
