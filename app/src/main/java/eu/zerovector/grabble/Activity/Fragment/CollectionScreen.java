@@ -109,9 +109,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         int oldXP = Integer.parseInt(lblCurrentXP.getText().toString().split("/")[0]);
         int curXP = Game.currentPlayerData().getXP();
         final Experience.LevelDetails levelStats = Experience.getLevelDetailsForXP(curXP);
-        //lblCurrentXP.setText(curXP + "/" + levelStats.nextLevelXP());
         lblCurrentRank.setText(String.valueOf(levelStats.level()));
-        if (!updateCodes.contains(Code.LEVEL_INCREASED) && !levelUpAnimRunning) {
             ValueAnimator animatorXP = new ValueAnimator();
             animatorXP.setInterpolator(new LinearInterpolator());
             animatorXP.setIntValues(oldXP, curXP);
@@ -127,9 +125,8 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
                 }
             });
             animatorXP.start();
-        }
         // However, if we levelled up, do some fancy-schmancy animating
-        else {
+        if (updateCodes.contains(Code.LEVEL_INCREASED)) {
             levelUpAnimRunning = true;
             final int startColour = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.White);
             final int endColour = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.Goldenrod);
@@ -137,10 +134,10 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
             ValueAnimator animator = new ValueAnimator();
             animator.setInterpolator(new LinearInterpolator());
             animator.setFloatValues(0.0f, 1.0f);
-            animator.setDuration(320);
+            animator.setDuration(625);
             animator.setRepeatMode(ValueAnimator.REVERSE);
             animator.setRepeatCount(1);
-            animator.setStartDelay(300); // Give a little time to the XP counter to get running with its own animation
+            animator.setStartDelay(125); // Give a little time to the XP counter to get running with its own animation
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
@@ -160,6 +157,11 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
                 }
             });
             animator.start();
+        }
+
+        // Update rank name iff level-up animation not running
+        if (!levelUpAnimRunning) {
+            lblRankName.setText(Experience.getLevelName(levelStats.level(), Game.currentPlayerData().getAlignment()));
         }
 
         // Now do the same thing with the ash that we did in CityMap

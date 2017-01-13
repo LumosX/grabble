@@ -308,28 +308,36 @@ public final class Experience {
         // Again, we're pre-generating a list to help UI updates.
         LEVEL_NAMES = new ArrayList<>(MAX_LEVEL+1);
         SparseArray<LevelTierNamePair> specialNames = new SparseArray<>(21);
-        //                                          CLOSERS                    OPENERS
-        specialNames.put(0,  new LevelTierNamePair("Novice",                 "Acolyte"));
-        specialNames.put(5,  new LevelTierNamePair("Accepted",               "Grunt"));
-        specialNames.put(10, new LevelTierNamePair("Hunter",                 "Cultist"));
-        specialNames.put(15, new LevelTierNamePair("Soldier",                "Zealot"));
-        specialNames.put(20, new LevelTierNamePair("Watcher",                "Spireling"));
-        specialNames.put(25, new LevelTierNamePair("Keeper",                 "Defiler"));
-        specialNames.put(30, new LevelTierNamePair("Sergeant",               "Reaver"));
-        specialNames.put(35, new LevelTierNamePair("Guardian",               "Ravager"));
-        specialNames.put(40, new LevelTierNamePair("Captain",                "Ringleader"));
-        specialNames.put(45, new LevelTierNamePair("Elite",                  "Dedicated"));
-        specialNames.put(50, new LevelTierNamePair("Chosen",                 "Chosen")); // These are the same. Why? BECAUSE!
-        specialNames.put(55, new LevelTierNamePair("Sentinel",               "Forsworn"));
-        specialNames.put(60, new LevelTierNamePair("Stormcrow",              "Chief"));
-        specialNames.put(65, new LevelTierNamePair("Blademaster",            "Destroyer"));
-        specialNames.put(70, new LevelTierNamePair("Commander",              "Reaper"));
-        specialNames.put(75, new LevelTierNamePair("Centurion",              "Spire Lord"));
-        specialNames.put(80, new LevelTierNamePair("Prefect",                "Harbinger"));
-        specialNames.put(85, new LevelTierNamePair("High General",           "Greater Chief"));
-        specialNames.put(90, new LevelTierNamePair("Mortal Sword",           "Immortal"));
-        specialNames.put(95, new LevelTierNamePair("Exalted",                "Revered"));
-        specialNames.put(MAX_LEVEL, new LevelTierNamePair("Eternal Prophet", "Dark Messiah"));
+        //       CLOSERS💩OPENERS <-- because we programmers like 💩 like this
+        String[] tierNames = new String[]{
+                     "Novice\uD83D\uDCA9Acolyte",
+                   "Accepted\uD83D\uDCA9Grunt",
+                     "Hunter\uD83D\uDCA9Cultist",
+                    "Soldier\uD83D\uDCA9Zealot",
+                    "Watcher\uD83D\uDCA9Spireling",
+                     "Keeper\uD83D\uDCA9Defiler",
+                   "Sergeant\uD83D\uDCA9Reaver",
+                    "Captain\uD83D\uDCA9Ringleader",
+                   "Guardian\uD83D\uDCA9Ravager",
+                      "Elite\uD83D\uDCA9Dedicated",
+                     "Chosen\uD83D\uDCA9Chosen",
+                   "Sentinel\uD83D\uDCA9Forsworn",
+                  "Stormcrow\uD83D\uDCA9Chief",
+                "Blademaster\uD83D\uDCA9Destroyer",
+                  "Commander\uD83D\uDCA9Reaper",
+                  "Centurion\uD83D\uDCA9Spire Lord",
+                    "Prefect\uD83D\uDCA9Harbinger",
+               "High General\uD83D\uDCA9Greater Chief",
+               "Mortal Sword\uD83D\uDCA9Immortal",
+                    "Exalted\uD83D\uDCA9Revered",
+            "Eternal Prophet\uD83D\uDCA9Dark Messiah" // stacking 💩 in a pile... what am I doing with my life
+        };                                            // I'm supposed to be on vacation right now...
+        int index = 0;
+        for (String namePair : tierNames) {
+            String[] pair = namePair.split("\uD83D\uDCA9");
+            specialNames.put(index, new LevelTierNamePair(pair[0], pair[1]));
+            index += 5;
+        }
         // Now generate all the other names, using THESE as a basis
         int curLevelTier = 0;
         for (int i = 0; i <= MAX_LEVEL; i++) {

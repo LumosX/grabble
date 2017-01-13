@@ -22,9 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.zerovector.grabble.Data.Alignment;
+import eu.zerovector.grabble.Data.PlayerData;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.Network;
-import eu.zerovector.grabble.Data.PlayerData;
 import eu.zerovector.grabble.R;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
