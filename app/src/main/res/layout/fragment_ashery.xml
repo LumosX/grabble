@@ -6,26 +6,71 @@
     android:background="@color/Black"
     tools:context="eu.zerovector.grabble.Activity.Fragment.Ashery">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/groupCurAsh"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:scaleType="fitCenter"
+            android:id="@+id/imgAsh"
+            app:srcCompat="@drawable/icon_ash" />
+        <TextView
+            android:text="1000000000"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/lblCurrentAsh"
+            android:textSize="18sp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:textColor="@color/UI_AshGrey" />
+    </LinearLayout>
+
     <TextView
         android:text="ASHERY"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/lblTheCity"
+        android:id="@+id/lblAshery"
+        android:layout_below="@id/groupCurAsh"
         android:textColor="@color/White"
-        android:layout_alignParentEnd="false"
-        android:layout_marginEnd="25dp"
-        android:layout_centerInParent="false"
-        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:textSize="36sp"
+        android:layout_marginTop="4dp"
+        android:textSize="24sp"
         android:gravity="center" />
+
+    <TextView
+        android:text="Ash unto Letters"
+        android:layout_width="wrap_content"
+        android:layout_height ="wrap_content"
+        android:textColor="@color/White"
+        android:layout_below="@id/lblAshery"
+        android:layout_centerHorizontal="true"
+        android:textSize="18sp"
+        android:gravity="center" />
+
+    <eu.zerovector.grabble.Activity.Fragment.LetterSelector
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/letterSelector"
+        android:layout_below="@id/lblAshery"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="24dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
+        />
 
     <TextView
         android:text="@string/lblDownArrowCollection"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="2sp"
-        android:id="@+id/lblPlayerName"
+        android:id="@+id/lblCollection"
         android:textColor="@color/White"
         android:textSize="16sp"
         android:layout_alignParentBottom="true"

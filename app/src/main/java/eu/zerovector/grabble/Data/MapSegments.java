@@ -1,5 +1,7 @@
 package eu.zerovector.grabble.Data;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.SphericalUtil;
 
@@ -11,7 +13,7 @@ import java.util.List;
 import eu.zerovector.grabble.Game;
 
 // This helps managing the map segmentation code. Relies on the const segment size in Game.java.
-// Would've done it as a nested class, but apparently you can't call a non-static nested class from a static class. Fuck this language.
+// Would've done it as a nested class, but apparently you can't call a non-static nested class from a static class. Duck this language.
 public class MapSegments {
     private int[][] segmentArray; // Holds segment IDs, just so we're not doing any dark magic in order to retrieve them.
     private double minLatitude, minLongitude, maxLatitude, maxLongitude; // Game area bounds.
@@ -104,38 +106,36 @@ public class MapSegments {
 
     // A convenience method for getting the indices of all segments that neighbour another
     // Also, Javadoc is trash and I'm not using it. '<summary>' tags are where it's at.
-    public List<Integer> computeNeighbourSegments(int segmentIndex) {
+    public List<Integer> computeNeighbourSegments(int segmentIndex, int radius) {
         List<Integer> neighbours = new ArrayList<>();
-        // I can do it the smart way, but I'd rather do it the hard way and avoid fucking it up
+
+        // I can do it the smart way, but I'd rather do it the hard way and avoid ducking it up
         for (int i = 0; i < segmentArray.length; i++) {
             for (int j = 0; j < segmentArray[i].length; j++) {
                 if (segmentArray[i][j] == segmentIndex) { // Find the segment
-                    // Check which "directions" are good
-                    boolean N = false; boolean S = false; boolean E = false; boolean W = false;
-                    if (i > 1) S = true;
-                    if (i < numLatSegments - 1) N = true;
-                    if (j > 1) W = true;
-                    if (j < numLonSegments - 1) E = true;
-                    // And now add the 8 neighbouring elements the the list, depending on whether all's OK
-                    if (S) neighbours.add(segmentArray[i-1][j]);
-                    if (N) neighbours.add(segmentArray[i+1][j]);
-                    if (W) neighbours.add(segmentArray[i][j-1]);
-                    if (E) neighbours.add(segmentArray[i][j+1]);
-                    if (N && W) neighbours.add(segmentArray[i+1][j-1]);
-                    if (N && E) neighbours.add(segmentArray[i+1][j+1]);
-                    if (S && W) neighbours.add(segmentArray[i-1][j-1]);
-                    if (S && E) neighbours.add(segmentArray[i-1][j+1]);
+                    for (int radX = -radius; radX <= radius; radX++) {
+                        for (int radY = -radius; radY <= radius; radY++) {
+                            try{
+                                neighbours.add(segmentArray[i+radX][j+radY]);
+                            }catch (ArrayIndexOutOfBoundsException e){
+
+                                continue; // were on edge, cuz were edgy kidz
+                                // yolo swag JB, taylor swifts my nigga
+                            }
+                        }
+                    }
                 }
             }
         }
+        Log.d("HAYAYA", "checked segments: " + neighbours.size() + ", raidus = " + radius + ", supposed to be:" + Math.pow(radius * 2 + 1, 2));
         // What a terribly inelegant function.
         return neighbours;
     }
 
     // And one of these, because functions need to do what they say on the tin.
-    public List<Integer> computeSegmentAndNeighbours(LatLng pointCoords) {
+    public List<Integer> computeSegmentAndNeighbours(LatLng pointCoords, int radius) {
         int seg = computeSegment(pointCoords);
-        List<Integer> result = computeNeighbourSegments(seg);
+        List<Integer> result = computeNeighbourSegments(seg, radius);
         result.add(seg);
         return result;
     }

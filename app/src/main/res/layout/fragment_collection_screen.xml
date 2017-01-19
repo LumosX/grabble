@@ -52,7 +52,6 @@
         android:layout_height="30dp"
         android:id="@+id/lblPlayerName"
         android:textColor="@color/White"
-        android:layout_centerInParent="false"
         android:textSize="24sp"
         android:gravity="center"
         android:layout_alignParentTop="true"
@@ -210,9 +209,10 @@
         android:layout_height="match_parent"
         android:id="@+id/tblLetters"
         android:layout_below="@+id/lblCollection"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:layout_marginBottom="24dp"
+        android:stretchColumns="*"
         >
 
     </TableLayout>

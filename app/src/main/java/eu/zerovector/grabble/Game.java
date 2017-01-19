@@ -33,13 +33,14 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import eu.zerovector.grabble.Activity.UpdateUIListener;
 import eu.zerovector.grabble.Data.Alignment;
-import eu.zerovector.grabble.Data.Experience;
 import eu.zerovector.grabble.Data.GrabbleDict;
 import eu.zerovector.grabble.Data.Letter;
 import eu.zerovector.grabble.Data.MapSegments;
 import eu.zerovector.grabble.Data.Placemark;
 import eu.zerovector.grabble.Data.PlayerData;
 import eu.zerovector.grabble.Data.Word;
+import eu.zerovector.grabble.Data.XPUtils;
+import eu.zerovector.grabble.Utils.GrabbleAPIException;
 import eu.zerovector.grabble.Utils.RandomNameGenerator;
 
 // A static class that shall hold all core gameplay data and helper functions
@@ -74,7 +75,6 @@ public final class Game {
     public static boolean isIsPlayerLoggedIn() {
         return isPlayerLoggedIn;
     }
-
 
 
     private static LatLngBounds mapBounds; // The bounds of the map.
@@ -382,11 +382,11 @@ public final class Game {
     }
 
     // This is called whenever we approach a letter within grabbing distance and try to take it.
-    public static boolean grabLetter(Letter letter, Experience.DataPair extraDetails) {
+    public static boolean grabLetter(Letter letter, XPUtils.DataPair extraDetails) {
         boolean result = false;
 
-        Experience.LevelDetails levelDetails = extraDetails.levelDetails();
-        Experience.TraitSet perks = extraDetails.traitSet();
+        XPUtils.LevelDetails levelDetails = extraDetails.levelDetails();
+        XPUtils.TraitSet perks = extraDetails.traitSet();
 
         // Try completing a letter in the current word first
         if (currentPlayer.getCurrentWord().completeLetter(letter)) {
@@ -419,18 +419,17 @@ public final class Game {
         int oldXP = currentPlayer.getXP();
         currentPlayer.addXP(letter.getAshCreateValue());
 
-        // If we've completed a word, grant the value of the word as an Ash reward
+        // If we've completed a word, grant the DESTROY value of the word as an Ash reward
+        // (otherwise the player can just keep pumping words with a big enough balance, and break even)
         if (currentPlayer.getCurrentWord().isComplete()) {
             updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
-            currentPlayer.addAsh(currentPlayer.getCurrentWord().ashValue());
-            // TODO FLAG WORD AS COMPLETED IN FACTION
-            checkRequestNewWord();
+            onWordCompleted();
         }
 
         // And finally, if we've levelled up, grant the extra ash reward (if there is one)
-        if (oldXP + letter.getAshCreateValue() >= levelDetails.nextLevelXP()) {
+        if (oldXP < levelDetails.nextLevelXP() && oldXP + letter.getAshCreateValue() >= levelDetails.nextLevelXP()) {
             // We need to get the traitSet for the next level in order to find out how much ash it gives us
-            int ashReward = Experience.getPerksForLevel(levelDetails.level() + 1).getRawAshReward();
+            int ashReward = XPUtils.getPerksForLevel(levelDetails.level() + 1).getRawAshReward();
             currentPlayer.addAsh(ashReward);
             updateCodes.add(UpdateUIListener.Code.LEVEL_INCREASED);
         }
@@ -442,6 +441,68 @@ public final class Game {
         return true;
     }
 
+    // It had to be done...
+    private static void onWordCompleted() {
+        currentPlayer.addAsh(currentPlayer.getCurrentWord().ashDestroyValue());
+        Network.CompleteWord(currentPlayer.getCurrentWord());
+        checkRequestNewWord();
+    }
+
+    // The Ashery and Crematorium need to work from here, otherwise we end up tossing the current state all over the place
+    private static final int ASHERY_REQUEST_ERROR_TOO_POOR = 0;
+    private static final int ASHERY_REQUEST_LETTER_INTO_WORD = 1;
+    private static final int ASHERY_REQUEST_LETTER_INTO_INVENTORY = 2;
+    private static final int ASHERY_REQUEST_UNIDENTIFIED_ERROR = 3;
+    public static void onAsheryRequest(Letter letter) throws GrabbleAPIException {
+        // As we did when grabbing a letter, we need to check whether we can fill a spot in the current word first
+        int invCap = XPUtils.getAllDetailsForXP(currentPlayer.getXP()).traitSet().getInvCapacity();
+        int result = ASHERY_REQUEST_UNIDENTIFIED_ERROR;
+
+        // Before everything, check whether we've got enough ash
+        if (currentPlayer.getAsh() < letter.getAshCreateValue()) result = ASHERY_REQUEST_ERROR_TOO_POOR;
+        // Try completing a letter in the current word first
+        else if (currentPlayer.getCurrentWord().completeLetter(letter)) result = ASHERY_REQUEST_LETTER_INTO_WORD;
+        // Otherwise, add to inventory
+        else if (currentPlayer.getInventory().addLetter(letter, invCap)) result = ASHERY_REQUEST_LETTER_INTO_INVENTORY;
+
+        // Throw errors if necessary
+        if (result == ASHERY_REQUEST_ERROR_TOO_POOR) throw new GrabbleAPIException("Insufficient Ash");
+        else if (result == ASHERY_REQUEST_UNIDENTIFIED_ERROR) throw new GrabbleAPIException("Could not complete transaction");
+
+        // If no errors are necessary, DO THE WORK
+        Game.currentPlayerData().removeAsh(letter.getAshCreateValue());
+
+        EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
+        // However, if we DID complete a word (that's why the Ashery is more complicated)...
+        // ... we need to do signal this before the UI update
+        if (currentPlayer.getCurrentWord().isComplete()) {
+            updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
+            onWordCompleted();
+        }
+
+        // MUST UPDATE UI
+        callGlobalUIUpdate(EnumSet.noneOf(UpdateUIListener.Code.class), currentPlayer.getCurrentWord());
+
+        // And finally, I'll cheekily take advantage of the fact that this function throws exceptions...
+        // Otherwise the player will probably wonder why the Selector "didn't update" its count.
+        if (result == ASHERY_REQUEST_LETTER_INTO_WORD) {
+            throw new GrabbleAPIException("Added letter into current word!");
+        }
+    }
+
+    public static void onCrematoriumRequest(Letter letter) throws GrabbleAPIException {
+        // The Crematorium is easy - we can't complete words through it, we can only gain Ash.
+        if (currentPlayer.getInventory().removeLetter(letter, letter.getNumToDestroy())) {
+            currentPlayer.addAsh(letter.getAshDestroyValue());
+
+            // MUST UPDATE UI
+            callGlobalUIUpdate(EnumSet.noneOf(UpdateUIListener.Code.class), currentPlayer.getCurrentWord());
+        }
+        else {
+            throw new GrabbleAPIException("Insufficient letters to burn");
+        }
+    }
+
     public static void addUIListener(UpdateUIListener listener) {
         uiListeners.add(listener);
     }
@@ -451,6 +512,4 @@ public final class Game {
             listener.onUpdateUIReceived(codes, oldWord);
         }
     }
-
-
 }

@@ -1,6 +1,8 @@
 package eu.zerovector.grabble.Activity;
 
 import android.Manifest;
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,8 +13,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.LinearInterpolator;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +30,8 @@ import eu.zerovector.grabble.Data.PlayerData;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.Network;
 import eu.zerovector.grabble.R;
+import eu.zerovector.grabble.Utils.AnimUtils;
+import eu.zerovector.grabble.Utils.GrabbleAPIException;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
@@ -45,10 +51,14 @@ public class MainActivity extends AppCompatActivity {
     private EditText tbConfirmPassword;
     private EditText tbUsername;
     private EditText tbFactionName;
-    private ImageButton btnOpeners;
-    private ImageButton btnClosers;
-    private TextView lblAlignment;
+    private Button btnOpeners;
+    private Button btnClosers;
+    private TextView lblOpenersInfo;
+    private TextView lblClosersInfo;
+    private ImageView imgOpeners;
+    private ImageView imgClosers;
     private Alignment registrantAlignment;
+    private List<View> allChildViews;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -57,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
     // permissions request code
     private static final int REQUEST_ALL_PERMISSIONS = 1911;
+
+    private boolean registrationActive = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Also set up the custom font we'll be using.
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
-                .setDefaultFontPath("fonts/charter_regular.otf")
+                .setDefaultFontPath("fonts/Khartiya-Regular.otf")
                 .setFontAttrId(R.attr.fontPath)
                 .build());
         // Jesus Christ, adding a custom font was more difficult than writing this whole application in C# would've been.
@@ -111,8 +123,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // Return to the "login" "page" if registering
-        setPage(false);
+        if (registrationActive) {
+            setPage(false);
+            return;
+        }
 
+        // If not registering...
         // Allow the user to quit the application upon five quick presses
         long currentPressTime = System.currentTimeMillis();
         if (currentPressTime - lastBackPressTime > QUIT_TAP_INTERVAL_MILLISECONDS) {
@@ -144,108 +160,146 @@ public class MainActivity extends AppCompatActivity {
         tbConfirmPassword = (EditText)findViewById(R.id.tbConfirmPass);
         tbUsername        = (EditText)findViewById(R.id.tbUsername);
         tbFactionName     = (EditText)findViewById(R.id.tbFactionName);
-        btnOpeners        = (ImageButton)findViewById(R.id.btnOpeners);
-        btnClosers        = (ImageButton)findViewById(R.id.btnClosers);
-        lblAlignment      = (TextView)findViewById(R.id.lblAlignment);
+        btnOpeners        = (Button)findViewById(R.id.btnOpeners);
+        btnClosers        = (Button)findViewById(R.id.btnClosers);
+        lblClosersInfo    = (TextView)findViewById(R.id.lblClosersInfo);
+        lblOpenersInfo    = (TextView)findViewById(R.id.lblOpenersInfo);
+        imgOpeners        = (ImageView)findViewById(R.id.imgOpeners);
+        imgClosers        = (ImageView)findViewById(R.id.imgClosers);
+        allChildViews = getAllChildrenDFS(findViewById(android.R.id.content));
     }
 
     public void btnLogin_click(View v) {
+        AnimUtils.DoGenericOnClickAnim((Button)v);
         // Log in, or at least try to.
-        PlayerData player = Network.Login(tbEmail.getText().toString(), tbPassword.getText().toString());
-        if (player != null) {
+        try {
+            PlayerData player = Network.Login(this, tbEmail.getText().toString(), tbPassword.getText().toString());
             Intent game = new Intent(this, GameActivity.class);
             this.startActivityForResult(game, 0);
             Game.onLogin(player);
         }
-        else Toast.makeText(this, "Couldn't log in: details not recognised", Toast.LENGTH_LONG).show();
+        catch (GrabbleAPIException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     public void btnRegister_click(View v) {
+        AnimUtils.DoGenericOnClickAnim((Button)v);
         // Make the expanded registration controls visible.
         setPage(true);
     }
 
     public void btnRandomise_click(View v) {
+        AnimUtils.DoGenericOnClickAnim((Button)v);
         tbFactionName.setText(Game.getRandomFactionName(registrantAlignment));
     }
 
     public void btnClosers_click(View v) {
+        AnimUtils.DoGenericOnClickAnim((Button)v);
         changeAlignment(Alignment.Closers);
     }
 
     public void btnOpeners_click(View v) {
+        AnimUtils.DoGenericOnClickAnim((Button)v);
         changeAlignment(Alignment.Openers);
     }
 
     public void btnConfirmRegister_click(View v) {
-        PlayerData registrant = new PlayerData(tbEmail.getText().toString(), tbUsername.getText().toString(),
-                tbPassword.getText().toString(), tbFactionName.getText().toString(), registrantAlignment);
-        String regResult = Network.Register(registrant, tbConfirmPassword.getText().toString()); // I'm a lazy bastard, I know
-        if (regResult.equals(Network.REGISTER_SUCCESSFUL)) {
-            // Automatically attempt to log in.
+        AnimUtils.DoGenericOnClickAnim((Button)v);
+
+        PlayerData registrant = new PlayerData(
+                tbEmail.getText().toString(),
+                tbUsername.getText().toString(),
+                tbPassword.getText().toString(),
+                tbFactionName.getText().toString(),
+                registrantAlignment);
+        try {
+            Network.Register(this, registrant, tbConfirmPassword.getText().toString());
+            // Automatically attempt to log in if all went well.
+            Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
             btnLogin_click(v);
             // In case nothing happens (game not loaded yet), just return to the "login page"
             setPage(false);
         }
-        else
-            Toast.makeText(this, "Registration failed: " + regResult, Toast.LENGTH_LONG).show();
+        catch (GrabbleAPIException e) {
+            Toast.makeText(this, "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
-    private void changeAlignment(Alignment id) {
+    private void changeAlignment(final Alignment id) {
+        // Do nothing if the alignment is this one (otherwise the anims glitch out)
+        if (registrantAlignment == id) return;
+
+        // Set the alignment first to make sure we don't screw anything up
         registrantAlignment = id;
 
-        if (id == Alignment.Closers) { // Closers
-            // This indexing system is kinda nifty, actually...
-            // Though it is ridiculously overcomplicated.
-            btnOpeners.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_DarkGreyTranslucent));
-            btnClosers.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_GreyTranslucent));
-            String text = String.format(getResources().getString(R.string.lblAlignment), "Closers");
-            lblAlignment.setText(text);
-        } else if (id == Alignment.Openers) { // and Openers, too
-            btnOpeners.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_GreyTranslucent));
-            btnClosers.setBackgroundColor(ContextCompat.getColor(this, R.color.UI_DarkGreyTranslucent));
-            String text = String.format(getResources().getString(R.string.lblAlignment), "Openers");
-            lblAlignment.setText(text);
-        }
+        // REVISITING MUCH LATER ON: Time for fancy animations.
+        ValueAnimator animator = new ValueAnimator();
+        animator.setInterpolator(new LinearInterpolator());
+        animator.setFloatValues(0.0f, 1.0f);
+        animator.setDuration(500);
+        final int brightButtonBackground = 0xff000000 | ContextCompat.getColor(this, R.color.UI_GreyTranslucent);
+        final int darkButtonBackground = 0xff000000 | ContextCompat.getColor(this, R.color.UI_DarkGreyTranslucent);
+        final ArgbEvaluator colourEvaluator = new ArgbEvaluator();
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                float curProgress = valueAnimator.getAnimatedFraction();
+                float invProgress = 1.0f - curProgress; // 1.0 -> 0.0, respectively
+                // Note that we don't want the images to reach full brightness
+                float clampedProgress = 0.75f * curProgress;
+                float invClampedProg = 0.75f * invProgress;
+                // This indexing system is kinda nifty, actually...
+                // Though it is ridiculously overcomplicated.
+                if (id == Alignment.Closers) { // Closers
+                    // Fade out the Opener stuff, fade in the Closer stuff
+                    int curColour = (int)colourEvaluator.evaluate(curProgress, darkButtonBackground, brightButtonBackground);
+                    int invColour = (int)colourEvaluator.evaluate(curProgress, brightButtonBackground, darkButtonBackground);
+                    btnClosers.setBackgroundColor(curColour); btnOpeners.setBackgroundColor(invColour);
+                    imgClosers.setAlpha(clampedProgress); imgOpeners.setAlpha(invClampedProg);
+                    lblClosersInfo.setAlpha(curProgress); lblOpenersInfo.setAlpha(invProgress);
+                }
+                else { // and Openers, too
+                    // Do the opposite of the above
+                    int curColour = (int)colourEvaluator.evaluate(curProgress, darkButtonBackground, brightButtonBackground);
+                    int invColour = (int)colourEvaluator.evaluate(curProgress, brightButtonBackground, darkButtonBackground);
+                    btnOpeners.setBackgroundColor(curColour); btnClosers.setBackgroundColor(invColour);
+                    imgOpeners.setAlpha(clampedProgress); imgClosers.setAlpha(invClampedProg);
+                    lblOpenersInfo.setAlpha(curProgress); lblClosersInfo.setAlpha(invProgress);
+                }
+            }
+        });
+        animator.start();
+
+
     }
 
 
     // Changes the "page", from login to registration, or vice versa, by looking at the tags
     private void setPage(boolean register) {
-        List<View> views = getAllChildrenBFS(findViewById(android.R.id.content));
-        if (register) {
-            for (View v : views) { // What the hell, "in" is apparently in-valid.
-                Object t = v.getTag();
-                if (t != null && t.equals("MM_REGISTRATION")) v.setVisibility(View.VISIBLE);
-                else if (t != null && t.equals("MM_LOGIN")) v.setVisibility(View.INVISIBLE);
-            }
-        } else {
-            for (View v : views) {
-                Object t = v.getTag();
-                if (t != null && t.equals("MM_REGISTRATION")) v.setVisibility(View.INVISIBLE);
-                else if (t != null && t.equals("MM_LOGIN")) v.setVisibility(View.VISIBLE);
-            }
+        registrationActive = register;
+        for (View v : allChildViews) { // What the hell, "in" is apparently in-valid.
+            Object t = v.getTag();
+            if (t != null && t.equals("MM_REGISTRATION")) v.setVisibility((register) ? View.VISIBLE : View.INVISIBLE);
+            else if (t != null && t.equals("MM_LOGIN")) v.setVisibility((register) ? View.INVISIBLE : View.VISIBLE);
         }
     }
 
+    private List<View> getAllChildrenDFS(View v) {
+        List<View> children = new ArrayList<>();
 
-    // Helper method, lifted off of StackOverflow, because fuck me, mine didn't work.
-    // http://stackoverflow.com/questions/18668897/android-get-all-children-elements-of-a-viewgroup
-    private List<View> getAllChildrenBFS(View v) {
-        List<View> visited = new ArrayList<View>();
-        List<View> unvisited = new ArrayList<View>();
-        unvisited.add(v);
+        if (!(v instanceof ViewGroup))
+            return new ArrayList<>();
 
-        while (!unvisited.isEmpty()) {
-            View child = unvisited.remove(0);
-            visited.add(child);
-            if (!(child instanceof ViewGroup)) continue;
-            ViewGroup group = (ViewGroup) child;
-            final int childCount = group.getChildCount();
-            for (int i = 0; i < childCount; i++) unvisited.add(group.getChildAt(i));
+        ViewGroup group = (ViewGroup) v;
+
+        for (int i = 0; i < group.getChildCount(); i++){
+            View child = group.getChildAt(i);
+            children.add(child);
+            children.addAll(getAllChildrenDFS(child));
         }
 
-        return visited;
+        return children;
     }
 
     // Self-explanatory
@@ -265,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_ALL_PERMISSIONS) {
             // This sodding language doesn't even have 'goto'!
             allgood: if (grantResults.length > 0) {

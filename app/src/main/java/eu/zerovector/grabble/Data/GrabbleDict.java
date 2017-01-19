@@ -24,7 +24,7 @@ public class GrabbleDict {
 
         int result = 0;
         for (Word w : wordMap.keySet()) {
-            result += w.ashValue();
+            result += w.ashCreateValue();
         }
         totalAshValue = result;
         isDirty = false;

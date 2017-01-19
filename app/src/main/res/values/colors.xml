@@ -4,9 +4,10 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="transparent">#00ffffff</color>
+    <color name="transparent">#00000000</color>
     <color name="UI_AshGrey">#a5a5a5</color>
     <color name="UI_DarkGrey">#3e3e3e</color>
+    <color name="UI_WhiteTranslucent">#53ffffff</color>
     <color name="UI_GreyTranslucent">#53808080</color>
     <color name="UI_DarkGreyTranslucent">#53202020</color>
     <color name="hint_colour">#FFD2D2D2</color>

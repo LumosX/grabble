@@ -25,12 +25,13 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import eu.zerovector.grabble.Data.Experience;
-import eu.zerovector.grabble.Game;
-import eu.zerovector.grabble.Data.Letter;
-import eu.zerovector.grabble.R;
 import eu.zerovector.grabble.Activity.UpdateUIListener;
+import eu.zerovector.grabble.Data.Letter;
 import eu.zerovector.grabble.Data.Word;
+import eu.zerovector.grabble.Data.XPUtils;
+import eu.zerovector.grabble.Game;
+import eu.zerovector.grabble.R;
+import eu.zerovector.grabble.Utils.AnimUtils;
 
 import static eu.zerovector.grabble.Game.currentPlayerData;
 
@@ -52,6 +53,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
     private TextView lblRankName;
     private ArcProgress prbExperience;
     private TextView lblCurrentRank;
+    private ImageView imgAsh;
     private TextView lblCurrentAsh;
     private TextView lblCurrentXP;
     private TextView lblCurrentGrabRange;
@@ -79,6 +81,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         prbExperience = (ArcProgress)view.findViewById(R.id.prbExperience);
         lblCurrentRank = (TextView)view.findViewById(R.id.lblCurrentRank);
         lblCurrentAsh = (TextView)view.findViewById(R.id.lblCurrentAsh);
+        imgAsh = (ImageView)view.findViewById(R.id.imgAsh);
         lblCurrentXP = (TextView)view.findViewById(R.id.lblCurrentXP);
         lblCurrentGrabRange = (TextView)view.findViewById(R.id.lblCurrentGrabRange);
         lblCurrentSightRange = (TextView)view.findViewById(R.id.lblCurrentSightRange);
@@ -86,7 +89,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         levelUpAnimRunning = false;
 
         // debug
-        Game.currentPlayerData().setXP(450);
+        Game.currentPlayerData().setXP(1000000);
 
         // Link up to the Game class
         Game.addUIListener(this);
@@ -108,7 +111,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         // Unfortunately, the only thing which remembers what the old XP was is the actual counter
         int oldXP = Integer.parseInt(lblCurrentXP.getText().toString().split("/")[0]);
         int curXP = Game.currentPlayerData().getXP();
-        final Experience.LevelDetails levelStats = Experience.getLevelDetailsForXP(curXP);
+        final XPUtils.LevelDetails levelStats = XPUtils.getLevelDetailsForXP(curXP);
         lblCurrentRank.setText(String.valueOf(levelStats.level()));
             ValueAnimator animatorXP = new ValueAnimator();
             animatorXP.setInterpolator(new LinearInterpolator());
@@ -152,7 +155,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
             animator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    lblRankName.setText(Experience.getLevelName(levelStats.level(), Game.currentPlayerData().getAlignment()));
+                    lblRankName.setText(XPUtils.getLevelName(levelStats.level(), Game.currentPlayerData().getAlignment()));
                     levelUpAnimRunning = false;
                 }
             });
@@ -161,26 +164,14 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
 
         // Update rank name iff level-up animation not running
         if (!levelUpAnimRunning) {
-            lblRankName.setText(Experience.getLevelName(levelStats.level(), Game.currentPlayerData().getAlignment()));
+            lblRankName.setText(XPUtils.getLevelName(levelStats.level(), Game.currentPlayerData().getAlignment()));
         }
 
         // Now do the same thing with the ash that we did in CityMap
         // I think Ash looks better when it's not using a linear interpolator.
-        int currentAsh = currentPlayerData().getAsh();
-        int oldAsh = Integer.valueOf(lblCurrentAsh.getText().toString());
-        if (oldAsh != currentAsh) {
-            ValueAnimator animator = new ValueAnimator();
-            animator.setIntValues(oldAsh, currentAsh);
-            animator.setDuration(1250);
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    lblCurrentAsh.setText(String.valueOf((int)animation.getAnimatedValue()));
-                }
-            });
-            animator.start();
-        }
+        AnimUtils.DoGenericAshAnim(lblCurrentAsh, imgAsh, currentPlayerData().getAsh());
         // Sight and Grab ranges
-        Experience.TraitSet perks = Experience.getPerksForLevel(levelStats.level());
+        XPUtils.TraitSet perks = XPUtils.getPerksForLevel(levelStats.level());
         lblCurrentGrabRange.setText(perks.getGrabRange() + " m");
         lblCurrentSightRange.setText(perks.getSightRange() + " m");
 
@@ -203,7 +194,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         }
 
         // I tried using gridviews, listviews, adapters and God knows what else. NOTHING WORKS.
-        // AS USUAL, IF YOU WANT SOMETHING DONE RIGHT, YOU SHOULD DO IT YOURSELF. BY INFLATING TABLE CELLS. BECAUSE WHY THE FUCK NOT??!
+        // AS USUAL, IF YOU WANT SOMETHING DONE RIGHT, YOU SHOULD DO IT YOURSELF. BY INFLATING TABLE CELLS. BECAUSE WHY THE DUCK NOT??!
         // also, I ain't animating this crap. it's not impossible as-is, but I'd want to kill myself afterwards.
         // So: Get tblLetters
         int NUM_COLS = 3;
@@ -212,9 +203,12 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         // Inflate rows.
         List<TableRow> rows = new ArrayList<>();
         LayoutInflater inflater = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        // Pre-set colours based on count ratio
+        int colourStart = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.UI_DarkGrey);
+        int colourEnd = 0xffffffff; // White. No need to call anything if we know the code for 'white', right?
         for (int i = 0; i < numRows; i++) {
             View rowView = inflater.inflate(R.layout.collection_layout_letter_table_row, null);
-            //TableRow row = (TableRow)rowView.findViewById(R.id.rowTableRow);
+            //TableRow x = (TableRow)rowView.findViewById(R.id.rowTableRow);
             TableRow row = (TableRow)rowView;
             // Fill rows with respective cell values
             for (int j = 0; j < NUM_COLS; j++) {
@@ -236,15 +230,13 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
                 if (itemIndex < vals.size()) {
                     lblLetterVal.setText(vals.get(itemIndex));
                     lblLetterCount.setText(counts.get(itemIndex));
-                    // Set colours based on count ratio
-                    int start = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.UI_DarkGrey);
-                    int end = 0xffffffff; // White. No need to call anything if we know the code for 'white', right?
+
                     float ratio = (float)letterCountsInts[itemIndex]/(float)letterCapacity;
-                    int curColour = (int)new ArgbEvaluator().evaluate(ratio, start, end);
+                    int curColour = (int)new ArgbEvaluator().evaluate(ratio, colourStart, colourEnd);
                     lblLetterVal.setTextColor(curColour);
                     lblLetterCount.setTextColor(curColour);
                 }
-                // Otherwise simply set fields to empty text (cell number per row must be preserved)
+                // Otherwise simply set fields to empty text (cell number per x must be preserved)
                 else {
                     lblLetterVal.setText("");
                     lblLetterCount.setText("");

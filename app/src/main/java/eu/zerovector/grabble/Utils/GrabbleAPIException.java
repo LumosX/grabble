@@ -1,8 +1,9 @@
 package eu.zerovector.grabble.Utils;
 
-/**
- * Created by Lumos on 13/01/2017.
- */
-
+// Just a husk to make some things prettier (and more specialised).
 public class GrabbleAPIException extends Exception {
+
+    public GrabbleAPIException(String message) {
+        super(message);
+    }
 }

@@ -13,7 +13,8 @@ import eu.zerovector.grabble.R;
 // simply disregard state in all words.
 public class Word {
     private String wordValue;
-    private int ashValue;
+    private int ashCreateValue; // also serves as "XP value", sort of
+    private int ashDestroyValue;
     private boolean[] completionState;
 
     public Word(String wordValue) {
@@ -22,12 +23,15 @@ public class Word {
         // Given that the ash value of a word never changes, we might as well calculate it HERE
         // This creates more overhead upon instantiation, but never again, so it's okay, I guess...
         // The ash value of a word is the sum of the letter (creation) values of all of its letters (see the Letter enum class)
-        int val = 0;
+        int createVal = 0;
+        int destroyVal = 0;
         List<Letter> letters = toLetterList();
         for(Letter l : letters) {
-            val += l.getAshCreateValue();
+            createVal += l.getAshCreateValue();
+            destroyVal += l.getAshDestroyValue();
         }
-        this.ashValue = val;
+        this.ashCreateValue = createVal;
+        this.ashDestroyValue = destroyVal;
         // We ought to also set the completion status array up as well - set all to FALSE (uncollected)
         this.completionState = new boolean[letters.size()];
         for(int i = 0; i < completionState.length; i++) {
@@ -84,8 +88,12 @@ public class Word {
         return result;
     }
 
-    public int ashValue() {
-        return ashValue;
+    public int ashCreateValue() {
+        return ashCreateValue;
+    }
+
+    public int ashDestroyValue() {
+        return ashDestroyValue;
     }
 
     public int length() { return wordValue.length(); }

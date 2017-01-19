@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,13 +58,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import eu.zerovector.grabble.Data.Experience;
+import eu.zerovector.grabble.Activity.UpdateUIListener;
+import eu.zerovector.grabble.Data.Placemark;
+import eu.zerovector.grabble.Data.Word;
+import eu.zerovector.grabble.Data.XPUtils;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.Network;
-import eu.zerovector.grabble.Data.Placemark;
 import eu.zerovector.grabble.R;
-import eu.zerovector.grabble.Activity.UpdateUIListener;
-import eu.zerovector.grabble.Data.Word;
+import eu.zerovector.grabble.Utils.AnimUtils;
 
 import static eu.zerovector.grabble.Game.checkRequestNewWord;
 import static eu.zerovector.grabble.Game.currentPlayerData;
@@ -118,6 +118,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
     private boolean wordCompleteAnimRunning = false;
     private TextView lblCurrentWordCompletion;
     private TextView lblCurrentAsh;
+    private ImageView imgAsh;
     private ProgressBar pbExperience;
     private ProgressBar pbLettersForAsh;
 
@@ -174,6 +175,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         lblCurrentWordAux = (TextView)view.findViewById(R.id.lblCurrentWordAux);
         lblCurrentWordCompletion = (TextView)view.findViewById(R.id.lblCurrentWordCompletion);
         lblCurrentAsh = (TextView)view.findViewById(R.id.lblCurrentAsh);
+        imgAsh = (ImageView)view.findViewById(R.id.imgAsh);
         pbExperience = (ProgressBar)view.findViewById(R.id.pbExperience);
         pbLettersForAsh = (ProgressBar)view.findViewById(R.id.pbLettersForAsh);
         pbLettersForAsh.setProgressDrawable(new ProgressDrawable(Color.WHITE, Color.DKGRAY));
@@ -192,6 +194,8 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
 
         // Finally, update the UI
         updateUI(EnumSet.noneOf(Code.class), Game.currentPlayerData().getCurrentWord());
+
+        mapView.onResume();
 
         return view;
     }
@@ -328,7 +332,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
             mapView.onResume();
         }
         // Resume the location updates, assuming they were paused
-        if (apiClient.isConnected() && requestingLocationUpdates) {
+        if (apiClient.isConnected() && !requestingLocationUpdates) {
             startLocationUpdates();
         }
     }
@@ -383,7 +387,6 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
     public void onConnected(Bundle connectionHint) throws SecurityException {
         Log.i(TAG, "Connected to GoogleApiClient");
         apiClientConnected = true;
-
 
         if (currentLocation == null) {
             currentLocation = LocationServices.FusedLocationApi.getLastLocation(apiClient);
@@ -453,7 +456,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         if (allPlacemarks == null) return;
         BitmapDescriptor unknownLetter = BitmapDescriptorFactory.fromResource(R.drawable.marker_letters_unknown);
         for (Placemark point : allPlacemarks) {
-            // DEBUG: Look at segment values
+            //// DEBUG: Look at segment values
             //IconGenerator x = new IconGenerator(getActivity());
             //Bitmap b = x.makeIcon(point.segmentID() + "");
             //BitmapDescriptor unknownLetter = BitmapDescriptorFactory.fromBitmap(b);
@@ -465,7 +468,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         // Also set the circles up - prevent null-pointers with a mock location, if necessary
         if (currentLocation == null) currentLocation = new Location("me");
         // (a C#-style "var" would be nice right about now, eh?)
-        Experience.DataPair playerDetails = Experience.getAllDetailsForXP(currentPlayerData().getXP());
+        XPUtils.DataPair playerDetails = XPUtils.getAllDetailsForXP(currentPlayerData().getXP());
         circleGrabRadius = map.addCircle(new CircleOptions()
                 .center(locationToLatLng(currentLocation))
                 .radius(playerDetails.traitSet().getGrabRange())
@@ -488,9 +491,9 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
     }
 
     // This fires whenever our location changes.
+    // (Tried putting it in a handler, didn't work. Will have to stay on the main thread.)
     @Override
-    public void onLocationChanged(Location location) {
-
+    public void onLocationChanged(final Location location) {
         if (location != null && circleGrabRadius != null && circleSightRadius != null) {
             // Smoothly interpolate the position of the circles (the radius will remain as-is)
             // We can't make a PVH from doubles, and I'm not making it out of objects, so the lat-lons need to get casted to floats.
@@ -505,8 +508,8 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
                     // But since casting floats to doubles isn't that straight-forward... this is a sodding mess.
-                    LatLng curLoc = new LatLng(Double.parseDouble(Float.toString((float)valueAnimator.getAnimatedValue("TRANSLATE_LAT"))),
-                                               Double.parseDouble(Float.toString((float)valueAnimator.getAnimatedValue("TRANSLATE_LON"))));
+                    LatLng curLoc = new LatLng(Double.valueOf((float)valueAnimator.getAnimatedValue("TRANSLATE_LAT")),
+                                    Double.valueOf((float)valueAnimator.getAnimatedValue("TRANSLATE_LON")));
                     circleGrabRadius.setCenter(curLoc);
                     circleSightRadius.setCenter(curLoc);
                 }
@@ -540,18 +543,21 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         List<Integer> pointIDsToSend = new ArrayList<>();
 
         LatLng currentCoords = locationToLatLng(location);
+        // Get the current player's stats here
+        XPUtils.DataPair playerDetails = XPUtils.getAllDetailsForXP(currentPlayerData().getExperience());
+        XPUtils.TraitSet playerPerks = playerDetails.traitSet();
+        // (Whilst we're here, update the size of the circles
+        circleGrabRadius.setRadius(playerPerks.getGrabRange());
+        circleSightRadius.setRadius(playerPerks.getSightRange());
+
         // InitMap already requires the map data to have loaded, so mapSegmentData() shan't return null ever
         // FIXME: Get as many neighbours as we need to fully "wrap" the Sight radius of the player
-        List<Integer> segmentsOfInterest = Game.mapSegmentData().computeSegmentAndNeighbours(currentCoords);
+        int segmentRadius = playerPerks.getSightRange() / Game.MAP_SEGMENT_MIN_LENGTH;
+        segmentRadius = (segmentRadius > 0) ? segmentRadius : 0;
+        List<Integer> segmentsOfInterest = Game.mapSegmentData().computeSegmentAndNeighbours(currentCoords, segmentRadius);
         // If only we had lambdas and C# (or at least Java 8) features...
 
 
-        // Get the current player's stats here
-        Experience.DataPair playerDetails = Experience.getAllDetailsForXP(currentPlayerData().getExperience());
-        Experience.TraitSet playerPerks = playerDetails.traitSet();
-        // (Whilst we're here, update the positions of the circles
-        circleGrabRadius.setRadius(playerPerks.getGrabRange());
-        circleSightRadius.setRadius(playerPerks.getSightRange());
 
         Iterator iter = mapMarkers.entrySet().iterator(); // This iterator stuff is bizarre
         while (iter.hasNext()) {
@@ -565,8 +571,6 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                 if (dist <= playerPerks.getGrabRange()) {
 
 
-
-
                     // TAKE POINT (and watch the flanks), and if we did take it, queue it for network verification
                     if (Game.grabLetter(placemark.letter(), playerDetails)) {
                         // Actually, only send the thing if the client wants it; otherwise - nae bovver, m8
@@ -576,8 +580,6 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                         // The point has been taken; remove all references to it, so we can't grab it again (separate serverside checks)
                         iter.remove();
                     }
-
-
 
 
                 }
@@ -597,9 +599,9 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                 marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_letters_unknown));
             }
         }
-        // Send the notification that letters have been collected.
-        // Note that we're doing all the stuff locally, and we're using the network request as confirmation.
-        Network.RequestLetterGrab(pointIDsToSend);
+
+        // Save progress immediately upon collecting a "cycle" of letters.
+        Network.SavePlayerData(getActivity(), Game.currentPlayerData());
 
     }
 
@@ -623,7 +625,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         }
 
         int curXP = currentPlayerData().getExperience();
-        Experience.LevelDetails levelDetails = Experience.getLevelDetailsForXP(curXP);
+        XPUtils.LevelDetails levelDetails = XPUtils.getLevelDetailsForXP(curXP);
 
         // No matter what happened, update the word label, completion count, and ash count
         // Update progress bars: XP first
@@ -662,7 +664,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         xpAnimator.start();
 
         // And now we need to do the same thing for the letters for ash (because things look better when they're smoother)
-        Experience.TraitSet playerPerks = Experience.getPerksForLevel(levelDetails.level());
+        XPUtils.TraitSet playerPerks = XPUtils.getPerksForLevel(levelDetails.level());
         ProgressDrawable drawable = (ProgressDrawable)pbLettersForAsh.getProgressDrawable();
         int numLetForAsh = playerPerks.getNumLettersForOneAsh();
         if (drawable.getNumSegments() != numLetForAsh) {
@@ -705,12 +707,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
 
         // Current word: we want some animation here as well.
         // HTML.fromHTML is deprecated in API 24, so we need to check for that
-        final Spanned targetCurWordTextSpan;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            targetCurWordTextSpan = Html.fromHtml(newWord.toColouredHTML(getActivity()), Html.FROM_HTML_MODE_LEGACY);
-        } else {
-            targetCurWordTextSpan = Html.fromHtml(newWord.toColouredHTML(getActivity()));
-        }
+        final Spanned targetCurWordTextSpan = AnimUtils.FromHTML(newWord.toColouredHTML(getActivity()));
         // In the general case, just update the textView that holds it.
         final int curWordAnimDuration = 500;
         if (!updateCodes.contains(Code.WORD_COMPLETED) && !wordCompleteAnimRunning) {
@@ -719,14 +716,9 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         // If we did COMPLETE a word, make it fancier. Animate same word to goldenrod first, then return to normal
         else {
             wordCompleteAnimRunning = true;
-            Spanned goldenText;
             String colour = Integer.toHexString(ContextCompat.getColor(getActivity(), R.color.Goldenrod));
             String targetString = "<font color=#" + colour.substring(2) + ">" + lblCurrentWord.getText().toString() + "</colour>";
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                goldenText = Html.fromHtml(targetString, Html.FROM_HTML_MODE_LEGACY);
-            } else {
-                goldenText = Html.fromHtml(targetString);
-            }
+            Spanned goldenText = AnimUtils.FromHTML(targetString);
             updateCurWordView(goldenText, (int)(curWordAnimDuration * 1.25f)); // This will animate it to Goldenrod
             // And this bullshit will return it to normal
             lblCurrentWord.animate().setStartDelay((int)(curWordAnimDuration * 1.6f) - 1).setDuration(1).setListener(new AnimatorListenerAdapter() {
@@ -741,21 +733,9 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
 
 
         // The rest is easy, though we do need to animate the ash counter (if changed).
-        int currentAsh = currentPlayerData().getAsh();
-        int oldAsh = Integer.valueOf(lblCurrentAsh.getText().toString());
-        if (oldAsh != currentAsh) {
-            ValueAnimator animator = new ValueAnimator();
-            animator.setIntValues(oldAsh, currentAsh);
-            animator.setDuration(1250);
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    lblCurrentAsh.setText(String.valueOf((int)animation.getAnimatedValue()));
-                }
-            });
-            animator.start();
-        }
+        AnimUtils.DoGenericAshAnim(lblCurrentAsh, imgAsh, currentPlayerData().getAsh());
         String newWordCompletion = newWord.numCompletedLetters() + "/" + newWord.length();
-        if (newWord == placeholder) newWordCompletion = "loading";
+        if (newWord.equals(placeholder)) newWordCompletion = "loading";
         lblCurrentWordCompletion.setText(newWordCompletion);
     }
 

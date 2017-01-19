@@ -35,7 +35,7 @@ public class GameActivity extends FragmentActivity {
         // Again, remove any potential title bar and set the custom font up
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
-                .setDefaultFontPath("fonts/charter_regular.otf")
+                .setDefaultFontPath("fonts/Khartiya-Regular.otf")
                 .setFontAttrId(R.attr.fontPath)
                 .build());
 

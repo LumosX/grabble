@@ -28,7 +28,7 @@ public class PlayerData {
         this.ash = 0;
         this.experience = 0;
         this.inventory = new Inventory();
-        this.lettersUntilExtraAsh = Experience.BASE_PERKS.getNumLettersForOneAsh();
+        this.lettersUntilExtraAsh = XPUtils.BASE_PERKS.getNumLettersForOneAsh();
     }
 
     // Email, username, alignment and created faction name will NEVER change, therefore...
@@ -178,6 +178,10 @@ public class PlayerData {
             return letterCounts;
         }
 
+        public int getAmountOfLetter(Letter letter) {
+            int index = letter.ordinal();
+            return letterCounts[index];
+        }
 
     }
 }

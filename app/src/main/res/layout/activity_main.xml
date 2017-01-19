@@ -27,12 +27,13 @@
             android:gravity="center"
             android:textSize="18sp"
             android:background="@color/UI_GreyTranslucent"
+            android:ellipsize="end"
             android:layout_width="match_parent"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
             android:layout_below="@+id/gameLogo"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             android:hint="Email"
             android:maxLines="1"
             android:textColorHint="@color/hint_colour" />
@@ -119,8 +120,8 @@
             android:textSize="18sp"
             android:background="@color/UI_GreyTranslucent"
             android:layout_width="match_parent"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="74dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="74dp"
             android:layout_marginTop="16dp"
             android:layout_below="@+id/tbUsername"
             android:hint="Faction name"
@@ -135,7 +136,7 @@
             android:id="@+id/btnRandomiseFactionName"
             android:background="@color/UI_GreyTranslucent"
             android:textSize="22sp"
-            android:textColor="@android:color/background_light"
+            android:textColor="@color/White"
             android:elevation="0dp"
             android:onClick="btnRandomise_click"
             android:layout_width="30dp"
@@ -146,14 +147,13 @@
             android:tag="MM_REGISTRATION" />
 
         <TextView
-            android:text="TextView"
+            android:text="Alignment:"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/tbFactionName"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             android:id="@+id/lblAlignment"
-            tools:text="@string/lblAlignment"
             android:textSize="18sp"
             android:tag="MM_REGISTRATION"
             android:textColor="@color/White" />
@@ -161,38 +161,95 @@
         <!-- This is quite contrived, you know that? -->
         <Space
             android:layout_width="24dp"
-            android:layout_height="76dp"
+            android:layout_height="106dp"
             android:layout_centerHorizontal="true"
             android:layout_below="@+id/lblAlignment"
             android:layout_marginTop="8dp"
             android:id="@+id/spcAlignments" />
 
-        <ImageButton
-            app:srcCompat="@drawable/icon_closers"
-            android:id="@+id/btnClosers"
-            android:background="@color/UI_GreyTranslucent"
-            android:scaleType="fitCenter"
-            android:layout_height="76dp"
-            android:layout_width="76dp"
-            android:layout_marginStart="-44dp"
-            android:layout_below="@+id/lblAlignment"
-            android:layout_marginTop="8dp"
-            android:layout_toLeftOf="@+id/spcAlignments"
-            android:onClick="btnClosers_click"
-            android:tag="MM_REGISTRATION" />
-
-        <ImageButton
-            app:srcCompat="@drawable/icon_openers"
+        <Button
             android:id="@+id/btnOpeners"
             android:background="@color/UI_DarkGreyTranslucent"
-            android:scaleType="fitCenter"
-            android:layout_height="76dp"
-            android:layout_width="76dp"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:text="Openers"
+            android:textSize="18sp"
+            android:textColor="@color/White"
             android:layout_below="@+id/lblAlignment"
             android:layout_marginTop="8dp"
-            android:layout_toRightOf="@+id/spcAlignments"
+            android:layout_marginEnd="30dp"
+            android:layout_toEndOf="@+id/spcAlignments"
             android:onClick="btnOpeners_click"
-            android:tag="MM_REGISTRATION" />
+            android:tag="MM_REGISTRATION"
+            android:scaleType="fitCenter" />
+        <ImageView
+            android:id="@+id/imgOpeners"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:layout_below="@+id/btnOpeners"
+            android:layout_alignEnd="@id/btnOpeners"
+            android:layout_marginTop="4dp"
+            android:onClick="btnOpeners_click"
+            android:alpha="0.05"
+            android:tag="MM_REGISTRATION"
+            android:scaleType="fitEnd"
+            app:srcCompat="@drawable/icon_openers" />
+        <TextView
+            android:id="@+id/lblOpenersInfo"
+            android:layout_width="match_parent"
+            android:layout_height="76dp"
+            android:layout_below="@+id/btnClosers"
+            android:layout_alignStart="@+id/imgClosers"
+            android:layout_alignTop="@id/imgOpeners"
+            android:layout_marginEnd="80dp"
+            android:layout_alignEnd="@id/imgOpeners"
+            android:text="@string/infoOpeners"
+            android:textSize="12sp"
+            android:textColor="@color/White"
+            android:gravity="center_vertical|end"
+            android:alpha="1"
+            android:tag="MM_REGISTRATION"/>
+
+        <Button
+            android:id="@+id/btnClosers"
+            android:background="@color/UI_GreyTranslucent"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:text="Closers"
+            android:textSize="18sp"
+            android:textColor="@color/White"
+            android:onClick="btnClosers_click"
+            android:tag="MM_REGISTRATION"
+            android:layout_marginStart="30dp"
+            android:layout_alignTop="@+id/spcAlignments"
+            android:layout_toStartOf="@+id/spcAlignments" />
+        <ImageView
+            android:id="@+id/imgClosers"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:layout_marginTop="4dp"
+            android:layout_below="@+id/btnClosers"
+            android:layout_alignStart="@id/btnClosers"
+            android:onClick="btnOpeners_click"
+            android:alpha="0.75"
+            android:tag="MM_REGISTRATION"
+            android:scaleType="fitStart"
+            app:srcCompat="@drawable/icon_closers" />
+        <TextView
+            android:id="@+id/lblClosersInfo"
+            android:layout_width="match_parent"
+            android:layout_height="76dp"
+            android:layout_below="@+id/btnClosers"
+            android:layout_alignStart="@id/imgClosers"
+            android:layout_alignTop="@id/imgClosers"
+            android:layout_marginStart="80dp"
+            android:layout_alignEnd="@id/imgOpeners"
+            android:text="@string/infoClosers"
+            android:textSize="12sp"
+            android:gravity="start|center_vertical"
+            android:textColor="@color/White"
+            android:alpha="0"
+            android:tag="MM_REGISTRATION"/>
 
         <Button
             android:text="Login"
@@ -201,7 +258,7 @@
             android:background="@color/UI_GreyTranslucent"
             android:layout_width="150dp"
             android:textSize="18sp"
-            android:textColor="@android:color/background_light"
+            android:textColor="@color/White"
             android:elevation="0dp"
             android:onClick="btnLogin_click"
             android:layout_alignBottom="@+id/tbConfirmPass"
@@ -215,7 +272,7 @@
             android:background="@color/UI_GreyTranslucent"
             android:layout_width="150dp"
             android:textSize="18sp"
-            android:textColor="@android:color/background_light"
+            android:textColor="@color/White"
             android:elevation="0dp"
             android:onClick="btnRegister_click"
             android:layout_alignBottom="@+id/tbUsername"
@@ -229,13 +286,14 @@
             android:background="@color/UI_GreyTranslucent"
             android:layout_width="150dp"
             android:textSize="18sp"
-            android:textColor="@android:color/background_light"
+            android:textColor="@color/White"
             android:elevation="0dp"
             android:onClick="btnConfirmRegister_click"
             android:layout_centerHorizontal="true"
             android:layout_below="@+id/spcAlignments"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="16dp"
             android:tag="MM_REGISTRATION" />
+
 
 
     </RelativeLayout>
