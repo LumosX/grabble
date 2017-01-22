@@ -90,6 +90,12 @@ public final class XPUtils {
             this.nextLevelXP = nextLevelXP;
         }
 
+        public LevelDetails(LevelDetails copySource) {
+            this.level = copySource.level;
+            this.thisLevelXP = copySource.thisLevelXP;
+            this.nextLevelXP = copySource.nextLevelXP;
+        }
+
         public int level() {
             return level;
         }
@@ -132,7 +138,7 @@ public final class XPUtils {
         LEVEL_PERKS = new ArrayList<>(MAX_LEVEL+1);
         // Level 0 and level 100 are easy.
         LEVEL_PERKS.add(0, BASE_PERKS);
-        TraitSet curPerks = new TraitSet(BASE_PERKS);
+        TraitSet.Builder curPerks = new TraitSet.Builder(BASE_PERKS);
         for (int i = 1; i <= MAX_LEVEL; i++) {
             curPerks.setRawAshReward(0);
             // If at max level, add 25 Sight, 10 Grab, 10 inventory slots and reduce letters for ash to 1
@@ -183,7 +189,7 @@ public final class XPUtils {
                 curPerks.setRawAshReward(i * 10); // tenfold the level should be enough
             }
 
-            LEVEL_PERKS.add(i, new TraitSet(curPerks));
+            LEVEL_PERKS.add(i, curPerks.build());
         }
 
         Log.d("TAG", "FINE2");
@@ -192,6 +198,149 @@ public final class XPUtils {
     public static TraitSet getPerksForLevel(int level) {
         if (level > MAX_LEVEL) return LEVEL_PERKS.get(MAX_LEVEL);
         return LEVEL_PERKS.get(level);
+    }
+
+    // This class holds auxiliary values that may change with player level
+    // I wanted to shoehorn the "Builder" pattern somewhere, but that ended up not happening
+    // EDIT: It actually did! Right here, too! I knew it!
+    public static class TraitSet {
+        private int grabRange; // RANGES ARE RADII, NOT DIAMETERS!
+        private int sightRange;
+        private int invCapacity;
+        private int numLettersForOneAsh;
+        private int rawAshReward;
+
+        public TraitSet(int grabRange, int sightRange, int invCapacity, int lettersForOneAsh, int ashReward) {
+            this.grabRange = grabRange;
+            this.sightRange = sightRange;
+            this.invCapacity = invCapacity;
+            this.numLettersForOneAsh = lettersForOneAsh;
+            this.rawAshReward = ashReward;
+        }
+
+        // This is necessary because, apparently, passing "by reference" is being taken too literally...
+        public TraitSet(TraitSet copySource) {
+            this.grabRange = copySource.getGrabRange();
+            this.sightRange = copySource.getSightRange();
+            this.invCapacity = copySource.getInvCapacity();
+            this.numLettersForOneAsh = copySource.getNumLettersForOneAsh();
+            this.rawAshReward = copySource.getRawAshReward();
+        }
+
+        public static class Builder {
+            private int grabRange; // RANGES ARE RADII, NOT DIAMETERS!
+            private int sightRange;
+            private int invCapacity;
+            private int numLettersForOneAsh;
+            private int rawAshReward;
+
+            public Builder(int grabRange, int sightRange, int invCapacity, int lettersForOneAsh, int ashReward) {
+                this.grabRange = grabRange;
+                this.sightRange = sightRange;
+                this.invCapacity = invCapacity;
+                this.numLettersForOneAsh = lettersForOneAsh;
+                this.rawAshReward = ashReward;
+            }
+            // This is necessary because, apparently, passing "by reference" is being taken too literally...
+            public Builder(TraitSet copySource) {
+                this.grabRange = copySource.getGrabRange();
+                this.sightRange = copySource.getSightRange();
+                this.invCapacity = copySource.getInvCapacity();
+                this.numLettersForOneAsh = copySource.getNumLettersForOneAsh();
+                this.rawAshReward = copySource.getRawAshReward();
+            }
+
+            // Setters shall be private, given that all the setting is done in the master-class
+            public Builder addGrabRange(int range) {
+                this.grabRange += range;
+                return this;
+            }
+
+            public Builder setGrabRange(int grabRange) {
+                this.grabRange = grabRange;
+                return this;
+            }
+
+            public Builder addSightRange(int range) {
+                this.sightRange += range;
+                return this;
+            }
+
+            public Builder setSightRange(int sightRange) {
+                this.sightRange = sightRange;
+                return this;
+            }
+
+            public Builder addInvCapacity(int extraCapacity) {
+                this.invCapacity += extraCapacity;
+                return this;
+            }
+
+            public Builder setInvCapacity(int invCapacity) {
+                this.invCapacity = invCapacity;
+                return this;
+            }
+
+            public Builder reduceNumLettersForOneAsh(int delta) {
+                this.numLettersForOneAsh -= delta;
+                return this;
+            }
+
+            public Builder setNumLettersForOneAsh(int amount) {
+                this.numLettersForOneAsh = amount;
+                return this;
+            }
+
+            public Builder setRawAshReward(int amount) {
+                this.rawAshReward = amount;
+                return this;
+            }
+
+            public TraitSet build() {
+                return new TraitSet(grabRange, sightRange, invCapacity, numLettersForOneAsh, rawAshReward);
+            }
+
+            public int getGrabRange() {
+                return grabRange;
+            }
+
+            public int getSightRange() {
+                return sightRange;
+            }
+
+            public int getInvCapacity() {
+                return invCapacity;
+            }
+
+            public int getNumLettersForOneAsh() {
+                return numLettersForOneAsh;
+            }
+
+            public int getRawAshReward() {
+                return rawAshReward;
+            }
+
+        }
+
+        public int getGrabRange() {
+            return grabRange;
+        }
+
+        public int getSightRange() {
+            return sightRange;
+        }
+
+        public int getInvCapacity() {
+            return invCapacity;
+        }
+
+        public int getNumLettersForOneAsh() {
+            return numLettersForOneAsh;
+        }
+
+        public int getRawAshReward() {
+            return rawAshReward;
+        }
     }
 
     public static DataPair getAllDetailsForXP(int curXP) {
@@ -206,8 +355,8 @@ public final class XPUtils {
         private LevelDetails det;
         private TraitSet tra;
         public DataPair(LevelDetails details, TraitSet perks) {
-            this.det = details;
-            this.tra = perks;
+            this.det = new LevelDetails(details);
+            this.tra = new TraitSet(perks);
         }
         public LevelDetails levelDetails() {
             return det;
@@ -215,88 +364,10 @@ public final class XPUtils {
         public TraitSet traitSet() {
             return tra;
         }
-    }
 
-    // This class holds auxiliary values that may change with player level
-    // I wanted to shoehorn the "Builder" pattern somewhere, but that ended up not happening
-    public static class TraitSet {
-        private int grabRange; // RANGES ARE RADII, NOT DIAMETERS!
-        private int sightRange;
-        private int invCapacity;
-        private int numLettersForOneAsh;
-        private int rawAshReward;
-        public TraitSet(int grabRange, int sightRange, int invCapacity, int lettersForOneAsh, int ashReward) {
-            this.grabRange = grabRange;
-            this.sightRange = sightRange;
-            this.invCapacity = invCapacity;
-            this.numLettersForOneAsh = lettersForOneAsh;
-            this.rawAshReward = ashReward;
-        }
-        // This is necessary because, apparently, passing "by reference" is being taken too literally...
-        public TraitSet(TraitSet copySource) {
-            this.grabRange = copySource.getGrabRange();
-            this.sightRange = copySource.getSightRange();
-            this.invCapacity = copySource.getInvCapacity();
-            this.numLettersForOneAsh = copySource.getNumLettersForOneAsh();
-            this.rawAshReward = copySource.getRawAshReward();
-        }
 
-        public int getGrabRange() {
-            return grabRange;
-        }
+        // WAIT! I CAN ACTUALLY SHOEHORN THE PATTERN HERE!
 
-        // Setters shall be private, given that all the setting is done in the master-class
-        private void addGrabRange(int range) {
-            this.grabRange += range;
-        }
-
-        private void setGrabRange(int grabRange) {
-            this.grabRange = grabRange;
-        }
-
-        public int getSightRange() {
-            return sightRange;
-        }
-
-        private void addSightRange(int range) {
-            this.sightRange += range;
-        }
-
-        private void setSightRange(int sightRange) {
-            this.sightRange = sightRange;
-        }
-
-        public int getInvCapacity() {
-            return invCapacity;
-        }
-
-        private void addInvCapacity(int extraCapacity) {
-            this.invCapacity += extraCapacity;
-        }
-
-        private void setInvCapacity(int invCapacity) {
-            this.invCapacity = invCapacity;
-        }
-
-        public int getNumLettersForOneAsh() {
-            return numLettersForOneAsh;
-        }
-
-        private void reduceNumLettersForOneAsh(int delta) {
-            this.numLettersForOneAsh -= delta;
-        }
-
-        private void setNumLettersForOneAsh(int amount) {
-            this.numLettersForOneAsh = amount;
-        }
-
-        public int getRawAshReward() {
-            return rawAshReward;
-        }
-
-        private void setRawAshReward(int amount) {
-            this.rawAshReward = amount;
-        }
     }
 
 

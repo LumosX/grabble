@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Remove the title bar.
+        // Remove the title bar, if any
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         // Request all permissions we're going to need (valid for API >= 23)
@@ -92,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
                 .build());
         // Jesus Christ, adding a custom font was more difficult than writing this whole application in C# would've been.
 
+        // Hack the background image in again - done here so it works properly with a scrollview and soft keyboard
+        getWindow().setBackgroundDrawableResource(R.drawable.background_main_menu);
+
         // Initialise the views
         setContentView(R.layout.activity_main);
 
@@ -108,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
         setPage(false);
     }
 
-    // Add the Calligraphy wrapper.
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
@@ -176,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
             PlayerData player = Network.Login(this, tbEmail.getText().toString(), tbPassword.getText().toString());
             Intent game = new Intent(this, GameActivity.class);
             this.startActivityForResult(game, 0);
-            Game.onLogin(player);
+            Game.onLogin(this, player);
         }
         catch (GrabbleAPIException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();

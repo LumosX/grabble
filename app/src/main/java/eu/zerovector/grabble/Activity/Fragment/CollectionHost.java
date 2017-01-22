@@ -44,6 +44,7 @@ public class CollectionHost extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         VerticalViewPager childPager = (VerticalViewPager)view.findViewById(R.id.verticalViewPager);
+        childPager.setOffscreenPageLimit(2);
         childPager.setAdapter(new ChildPagerAdapter(getChildFragmentManager()));
         childPager.setCurrentItem(1); // again, we're interested in the middle screen
         // Attach pager to master

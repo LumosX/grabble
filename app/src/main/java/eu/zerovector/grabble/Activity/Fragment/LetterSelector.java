@@ -24,8 +24,8 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.zerovector.grabble.Data.Inventory;
 import eu.zerovector.grabble.Data.Letter;
-import eu.zerovector.grabble.Data.PlayerData;
 import eu.zerovector.grabble.Data.XPUtils;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.R;
@@ -38,7 +38,7 @@ public class LetterSelector extends RelativeLayout {
     private TableLayout table;
     private TextView[][] letterViews;
     private Letter selectedLetter = Letter.A;
-    private PlayerData.Inventory curInventory = null;
+    private Inventory curInventory = null;
     private int curInventoryCap = 5;
     private RowCol markerPos = new RowCol(0,0);
     private ModusOperandi currentMode = ModusOperandi.Ashery;
@@ -71,7 +71,7 @@ public class LetterSelector extends RelativeLayout {
 
         // Really sorry, but I'll do it the garbage way and just inflate a layout.
         // It's cheap, I know, but I've got no desire to write one from scratch right now.
-        LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        LayoutInflater inflater = LayoutInflater.from(context);
         view = inflater.inflate(R.layout.layout_letter_selector, this, true);
         table = (TableLayout)view.findViewById(R.id.LetSelParentTable);
         allSubViews = getAllChildrenBFS(table);
@@ -273,7 +273,7 @@ public class LetterSelector extends RelativeLayout {
     }
 
     // Well, this one is pretty important too
-    public void setInventoryData(PlayerData.Inventory inventory, int letterCapacity) {
+    public void setInventoryData(Inventory inventory, int letterCapacity) {
         curInventory = inventory;
         curInventoryCap = letterCapacity;
         LetSelInvCount.setText(getLetSelInvCount());

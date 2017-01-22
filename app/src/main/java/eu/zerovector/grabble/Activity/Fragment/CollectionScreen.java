@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -32,6 +31,7 @@ import eu.zerovector.grabble.Data.XPUtils;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.R;
 import eu.zerovector.grabble.Utils.AnimUtils;
+import eu.zerovector.grabble.Utils.MathUtils;
 
 import static eu.zerovector.grabble.Game.currentPlayerData;
 
@@ -61,6 +61,8 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
     private TableLayout tblLetters;
     private boolean levelUpAnimRunning = false;
 
+    private boolean canReceiveUIUpdates = false;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -68,11 +70,11 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         View view = inflater.inflate(R.layout.fragment_collection_screen, container, false);
 
         // Load background picture and all the other icons
-        Picasso.with(getActivity()).load(R.drawable.background_collection).into((ImageView)view.findViewById(R.id.backgroundImage));
-        Picasso.with(getActivity()).load(R.drawable.icon_ash).into((ImageView)view.findViewById(R.id.imgAsh));
-        Picasso.with(getActivity()).load(R.drawable.icon_xp).into((ImageView)view.findViewById(R.id.imgXP));
-        Picasso.with(getActivity()).load(R.drawable.icon_grab).into((ImageView)view.findViewById(R.id.imgGrab));
-        Picasso.with(getActivity()).load(R.drawable.icon_sight).into((ImageView)view.findViewById(R.id.imgSight));
+        Picasso.with(getContext()).load(R.drawable.background_collection).into((ImageView)view.findViewById(R.id.backgroundImage));
+        Picasso.with(getContext()).load(R.drawable.icon_ash).into((ImageView)view.findViewById(R.id.imgAsh));
+        Picasso.with(getContext()).load(R.drawable.icon_xp).into((ImageView)view.findViewById(R.id.imgXP));
+        Picasso.with(getContext()).load(R.drawable.icon_grab).into((ImageView)view.findViewById(R.id.imgGrab));
+        Picasso.with(getContext()).load(R.drawable.icon_sight).into((ImageView)view.findViewById(R.id.imgSight));
 
         // Do the "binding" here. I used this very helpful tool: https://www.buzzingandroid.com/tools/android-layout-finder/
         rootView = (RelativeLayout)view;
@@ -98,12 +100,15 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         lblPlayerName.setText(Game.currentPlayerData().getUsername());
 
         // Populate everything else in the re-usable function.
+        canReceiveUIUpdates = true;
         updateViews(EnumSet.noneOf(Code.class));
 
         return view;
     }
 
     private void updateViews(EnumSet<Code> updateCodes) {
+        if (!canReceiveUIUpdates || getContext() == null) return;
+
         // ALL THE THINGS AT THE TOP
         // Ash
         lblCurrentAsh.setText(String.valueOf(Game.currentPlayerData().getAsh()));
@@ -122,7 +127,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
                 public void onAnimationUpdate(ValueAnimator animation) {
                     int intermediateXP = (int) animation.getAnimatedValue();
                     int progress = (int)((float)(intermediateXP - t)/(float)(levelStats.nextLevelXP() - t) * 100);
-                    progress = clampInt(progress, 0, 100);
+                    progress = MathUtils.ClampInt(progress, 0, 100);
                     prbExperience.setProgress(progress);
                     lblCurrentXP.setText(intermediateXP + "/" + levelStats.nextLevelXP());
                 }
@@ -131,8 +136,8 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         // However, if we levelled up, do some fancy-schmancy animating
         if (updateCodes.contains(Code.LEVEL_INCREASED)) {
             levelUpAnimRunning = true;
-            final int startColour = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.White);
-            final int endColour = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.Goldenrod);
+            final int startColour = 0xff000000 | ContextCompat.getColor(getContext(), R.color.White);
+            final int endColour = 0xff000000 | ContextCompat.getColor(getContext(), R.color.Goldenrod);
             final ArgbEvaluator colorEvaluator = new ArgbEvaluator();
             ValueAnimator animator = new ValueAnimator();
             animator.setInterpolator(new LinearInterpolator());
@@ -202,9 +207,9 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         //numRows = 3;
         // Inflate rows.
         List<TableRow> rows = new ArrayList<>();
-        LayoutInflater inflater = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        LayoutInflater inflater = LayoutInflater.from(getContext());
         // Pre-set colours based on count ratio
-        int colourStart = 0xff000000 | ContextCompat.getColor(getActivity(), R.color.UI_DarkGrey);
+        int colourStart = 0xff000000 | ContextCompat.getColor(getContext(), R.color.UI_DarkGrey);
         int colourEnd = 0xffffffff; // White. No need to call anything if we know the code for 'white', right?
         for (int i = 0; i < numRows; i++) {
             View rowView = inflater.inflate(R.layout.collection_layout_letter_table_row, null);
@@ -244,13 +249,6 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
             }
             tblLetters.addView(row);
         }
-    }
-
-    // I know I shouldn't do it like this, but I will anyway.
-    private int clampInt(int val, int min, int max) {
-        if (val < min) return min;
-        if (val > max) return max;
-        else return val;
     }
 
     @Override

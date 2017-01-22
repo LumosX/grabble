@@ -50,6 +50,19 @@ public class Word {
         return result;
     }
 
+    // Technical uses only
+    public Inventory toInventory() {
+        Inventory result = new Inventory();
+        // We're essentially copying toLetterList
+        int len = wordValue.length();
+        for(int i = 0; i < len; i++) {
+            Letter l = Letter.fromChar(wordValue.charAt(i));
+            if (l != null) result.addLetter(l, 10); // This allows us to use other symbols which don't count
+        }
+        return result;
+
+    }
+
     public boolean[] completionState() {
         return completionState;
     }

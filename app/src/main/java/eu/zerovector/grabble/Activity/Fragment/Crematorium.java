@@ -29,6 +29,7 @@ public class Crematorium extends Fragment implements UpdateUIListener {
     private ImageView imgAsh;
     private TextView lblCurrentAsh;
 
+    private boolean canReceiveUIUpdates = false;
 
     public Crematorium() { }
     public static Crematorium newInstance() {
@@ -73,6 +74,7 @@ public class Crematorium extends Fragment implements UpdateUIListener {
         });
 
         // Also, mustn't forget to update the UI properly - apparently this gets re-called every time we switch the pages.
+        canReceiveUIUpdates = true;
         updateUI(false);
 
         // Inflate the layout for this fragment
@@ -87,6 +89,8 @@ public class Crematorium extends Fragment implements UpdateUIListener {
 
 
     private void updateUI(boolean animateAsh) {
+        if (!canReceiveUIUpdates || getContext() == null) return;
+
         // Whenever the inventory and ash amounts change, we need to reflect this
         letterSelector.setInventoryData(Game.currentPlayerData().getInventory(),
                 XPUtils.getAllDetailsForXP(Game.currentPlayerData().getXP()).traitSet().getInvCapacity());
@@ -99,12 +103,12 @@ public class Crematorium extends Fragment implements UpdateUIListener {
 //                // we need to manually verify whether we've got enough Ash for the transaction.
 //                XPUtils.DataPair playerData = XPUtils.getAllDetailsForXP(Game.currentPlayerData().getXP());
 //                int invCap = playerData.traitSet().getInvCapacity();
-//                PlayerData.Inventory curInv = Game.currentPlayerData().getInventory();
+//                Inventory curInv = Game.currentPlayerData().getInventory();
 //                if (Game.currentPlayerData().getAsh() >= selectedLetter.getAshCreateValue()) {
 //                    // If all conditions were met (addLetter returns true iff letter already added successfully)
 //                    // we can take as much ash as we need and just update the UI.
 //                    Game.currentPlayerData().removeAsh(selectedLetter.getAshCreateValue());
-//                    Game.grabLetter(selectedLetter, playerData); // YES, YES IT IS MENTAL
+//                    Game.grabPoints(selectedLetter, playerData); // YES, YES IT IS MENTAL
 //                }
 //                else {
 //                    Toast.makeText(getActivity(), "Insufficient Ash.", Toast.LENGTH_SHORT).show();

@@ -1,6 +1,10 @@
 package eu.zerovector.grabble.Data;
 
 
+import java.util.BitSet;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
 // A basic class to hold all data for a player.
 public class PlayerData {
     // Email, username and pass
@@ -16,6 +20,9 @@ public class PlayerData {
     private Inventory inventory; // The player's current inventory
     private Word currentWord; // And the word that the player is currently trying to complete
     private int lettersUntilExtraAsh; // the number of letters that still need to be collected until 1 extra ash is received
+    // In order to serialise progress (and load placemarks) properly
+    private int lastLoginDay;
+    private BitSet placemarksCollectedToday;
 
     public PlayerData(String email, String username, String password, String createdFactionName, Alignment alignment) {
         this.email = email;
@@ -29,6 +36,11 @@ public class PlayerData {
         this.experience = 0;
         this.inventory = new Inventory();
         this.lettersUntilExtraAsh = XPUtils.BASE_PERKS.getNumLettersForOneAsh();
+
+        Calendar cal = GregorianCalendar.getInstance();
+        lastLoginDay = cal.get(Calendar.DAY_OF_YEAR);
+
+        placemarksCollectedToday = new BitSet(1000);
     }
 
     // Email, username, alignment and created faction name will NEVER change, therefore...
@@ -126,6 +138,22 @@ public class PlayerData {
         this.lettersUntilExtraAsh -= amount;
     }
 
+    public int getLastLoginDay() {
+        return lastLoginDay;
+    }
+
+    public void setLastLoginDay(int dayOfYear) {
+        this.lastLoginDay = dayOfYear;
+    }
+
+    public BitSet getPlacemarksCollectedToday() {
+        return placemarksCollectedToday;
+    }
+
+    public void setPlacemarksCollectedToday(BitSet placemarksCollectedToday) {
+        this.placemarksCollectedToday = placemarksCollectedToday;
+    }
+
     // Override equals and hashCode to "fix" comparison:
     // Since a user's email address is the only thing we need to identify them, we only need compare it and it alone
     @Override
@@ -138,50 +166,4 @@ public class PlayerData {
         return this.email.hashCode();
     }
 
-
-
-
-
-
-
-    // And the inventory class, which can reliably stay in here.
-    public class Inventory {
-        private int[] letterCounts;
-
-        public Inventory() {
-            letterCounts = new int[26];
-        }
-
-        public boolean addLetter(Letter letter, int capacity) {
-            int index = letter.ordinal();
-            if (letterCounts[index] < capacity) {
-                letterCounts[index]++;
-                return true;
-            }
-            else return false;
-        }
-
-        public boolean removeLetter(Letter letter) {
-            return removeLetter(letter, 1); // Auto-assume removal of 1 letter by default
-        }
-
-        public boolean removeLetter(Letter letter, int amountToRemove) {
-            int index = letter.ordinal();
-            if (letterCounts[index] - amountToRemove >= 0) {
-                letterCounts[index] -= amountToRemove;
-                return true;
-            }
-            else return false;
-        }
-
-        public int[] getLetterCounts() {
-            return letterCounts;
-        }
-
-        public int getAmountOfLetter(Letter letter) {
-            int index = letter.ordinal();
-            return letterCounts[index];
-        }
-
-    }
 }

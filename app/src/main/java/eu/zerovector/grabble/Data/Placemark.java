@@ -4,7 +4,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 // And a class for these, because sure, why not...
 public class Placemark {
-    private int pointID;
+    private int pointID; // ZERO-BASED point index.
     private Letter letter;
     private LatLng coords;
     private int segmentID; // We're segmenting the map into "chunks" for easier state checking

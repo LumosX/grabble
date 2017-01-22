@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.zerovector.grabble.Game;
+import eu.zerovector.grabble.Utils.MathUtils;
 
 // This helps managing the map segmentation code. Relies on the const segment size in Game.java.
 // Would've done it as a nested class, but apparently you can't call a non-static nested class from a static class. Duck this language.
@@ -98,8 +99,8 @@ public class MapSegments {
         int latSegment = (int)((pointCoords.latitude - minLatitude) / deltaLatitude);
         int lonSegment = (int)((pointCoords.longitude - minLongitude) / deltaLongitude);
         // Then we need to clamp any potential "outliers" into the array bounds.
-        latSegment = clampInt(latSegment, 0, numLatSegments - 1);
-        lonSegment = clampInt(lonSegment, 0, numLonSegments - 1);
+        latSegment = MathUtils.ClampInt(latSegment, 0, numLatSegments - 1);
+        lonSegment = MathUtils.ClampInt(lonSegment, 0, numLonSegments - 1);
         // And finally, return the segment ID!
         return segmentArray[latSegment][lonSegment];
     }
@@ -117,10 +118,11 @@ public class MapSegments {
                         for (int radY = -radius; radY <= radius; radY++) {
                             try{
                                 neighbours.add(segmentArray[i+radX][j+radY]);
-                            }catch (ArrayIndexOutOfBoundsException e){
-
+                            } catch (ArrayIndexOutOfBoundsException e){
                                 continue; // were on edge, cuz were edgy kidz
-                                // yolo swag JB, taylor swifts my nigga
+                                // yolo swag JB, taylor swifts my homie
+
+                                // Note, added later: I don't remember what that was supposed to mean...
                             }
                         }
                     }
@@ -140,12 +142,6 @@ public class MapSegments {
         return result;
     }
 
-    // Java doesn't even have a 'Math.clamp' function. And no extension methods, either. BOOO!
-    private int clampInt(int val, int min, int max) {
-        if (val < min) return min;
-        if (val > max) return max;
-        else return val;
-    }
 
 
 

@@ -42,10 +42,18 @@ public class GameActivity extends FragmentActivity {
         // Do everything else
         setContentView(R.layout.activity_game);
 
-        // Fix pager
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Link pager in here, so that the activity is initialised when the fragments request it
         masterPager = (ViewPager)findViewById(R.id.viewPager);
+        masterPager.setOffscreenPageLimit(2);
         masterPager.setAdapter(new GamePagerAdapter(this, getSupportFragmentManager()));
         masterPager.setCurrentItem(1); // Set the page to the city map
+
     }
 
     @Override
@@ -73,7 +81,7 @@ public class GameActivity extends FragmentActivity {
             this.setResult(Game.GLOBAL_ACTIVITY_RESULT_LOGOUT);
             this.finish();
             // Notify the game that we're logging out
-            Game.onLogout();
+            Game.onLogout(this);
             if (lastBackMessageShown != null) lastBackMessageShown.cancel();
         }
         // Otherwise display a relevant message

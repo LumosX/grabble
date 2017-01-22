@@ -1,19 +1,13 @@
 package eu.zerovector.grabble;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.arasthel.asyncjob.AsyncJob;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.util.HashSet;
+import java.util.Map;
 
 import eu.zerovector.grabble.Data.FactionData;
 import eu.zerovector.grabble.Data.PlayerData;
@@ -22,10 +16,8 @@ import eu.zerovector.grabble.Utils.GrabbleAPIException;
 
 // A static class that shall hold all network-related functionality.
 public final class Network {
-    private static Type playerDataHSType = new TypeToken<HashSet<PlayerData>>(){}.getType();
-    private static Type factionDataHSType = new TypeToken<HashSet<FactionData>>(){}.getType();
-    private static HashSet<PlayerData> playersThatExist;
-    private static HashSet<FactionData> factionsThatExist;
+    //private static Type playerDataHSType = new TypeToken<HashSet<PlayerData>>(){}.getType();
+    //private static Type factionDataHSType = new TypeToken<HashSet<FactionData>>(){}.getType();
     private static String playerDataFilename = "players.dat";
     private static String factionDataFilename = "factions.dat"; // Factions retained for scalability purposes
 
@@ -37,7 +29,7 @@ public final class Network {
 
     // NETWORK FUNCTIONALITY
     public static PlayerData Login(Context caller, String email, String password) throws GrabbleAPIException {
-        HashSet<PlayerData> players = GetSavedPlayers(caller);
+        HashSet<PlayerData> players = GetAllPlayers(caller);
         for (PlayerData p : players) {
             if (p.getEmail().equals(email)) {
                 if (p.getPassword().equals(password)) return p;
@@ -81,7 +73,7 @@ public final class Network {
             throw new GrabbleAPIException("Username must be " + MAX_NAME_LENGTH + " chars at most");
 
         // Email and stuff mustn't be taken
-        HashSet<PlayerData> players = GetSavedPlayers(caller);
+        HashSet<PlayerData> players = GetAllPlayers(caller);
         for (PlayerData p : players) {
             if (p.getEmail().equals(registrant.getEmail()))
                 throw new GrabbleAPIException( "Email address already registered");
@@ -97,143 +89,156 @@ public final class Network {
             throw new GrabbleAPIException("Faction name must be at least " + MIN_FAC_NAME_LEN + " chars");
 
         // If all OK, register player:
-        players.add(registrant); // No need ot check for duplicates: we've forbidden them beforehand
-        SaveAllPlayers(caller, players);
+        SavePlayerData(caller, registrant);
 
         // Also register the faction:
-        HashSet<FactionData> factions = GetSavedFactions(caller);
-        factions.add((new FactionData(registrant.getCreatedFactionName(), registrant.getUsername())));
-        SaveAllFactions(caller, factions);
+        SaveFactionData(caller, new FactionData(registrant.getCreatedFactionName(), registrant.getUsername()));
     }
-
 
     public static void SavePlayerData(Context caller, PlayerData curPlayer) {
         Log.d("NETWORK", "Saving data");
-        HashSet<PlayerData> players = GetSavedPlayers(caller);
-        players.remove(curPlayer);
-        players.add(curPlayer);
-        SaveAllPlayers(caller, players);
+
+        try {
+            SharedPreferences prefs = caller.getSharedPreferences(playerDataFilename, 0);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(curPlayer.getEmail(), new Gson().toJson(curPlayer, PlayerData.class));
+            editor.apply(); // Commit change async. Works like a charm, apparently.
+        }
+        catch (Exception ex) {
+            // Usually happens iff we kill the context whilst trying to fiddle with the preferences
+            Log.e("NETWORK", "Couldn't save data: " + ex.getMessage());
+        }
     }
 
     public static void SaveFactionData(Context caller, FactionData curFaction) {
-        Log.d("NETWORK", "Saving faction data");
-        HashSet<FactionData> factions = GetSavedFactions(caller);
-        factions.remove(curFaction);
-        factions.add(curFaction);
-        SaveAllFactions(caller, factions);
+        try {
+            SharedPreferences prefs = caller.getSharedPreferences(factionDataFilename, 0);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(curFaction.getFactionName(), new Gson().toJson(curFaction, FactionData.class));
+            editor.apply(); // Commit change async. Works like a charm, apparently.
+        } catch (Exception ex) {
+            // Usually happens iff we kill the context whilst trying to fiddle with the preferences
+            Log.e("NETWORK", "Couldn't save faction data: " + ex.getMessage());
+        }
     }
 
-    public static void CompleteWord(Word completedWord) {
+    // Factions ended up the only thing we need individual calls to
+    public static FactionData GetFactionData(Context caller, String factionName) {
+        try {
+            SharedPreferences prefs = caller.getSharedPreferences(factionDataFilename, 0);
+            String data = prefs.getString(factionName, null);
+            if (data == null) throw new GrabbleAPIException("Faction '" + factionName + "' does not exist.");
+            return new Gson().fromJson(data, FactionData.class);
+        } catch (Exception ex) {
+            // Usually happens iff we kill the context whilst trying to fiddle with the preferences
+            Log.e("NETWORK", "Couldn't save faction data: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    public static void CompleteWordForFaction(Word completedWord, String factionName) {
         // TODO NOTIFY FACTION THAT A WORD HAS BEEN COMPLETED
-    }
-
-    public static int[] GetIncompleteWordIndices() {
-        return new int[]{};
     }
 
 
     // Now - a couple of IO operations to make our lives easier
-    // These will basically retain state in memory, with I/O iff necessary
-    // That's because there isn't going to be a lot of profiles active at any point in time, so...
-    private static HashSet<PlayerData> GetSavedPlayers(final Context caller) {
-        if (playersThatExist != null) return playersThatExist;
+    // We'll try using SharedPrefs w/ JSON serialisation. Why invent a framework when one exists?
+    private static HashSet<PlayerData> GetAllPlayers(final Context caller) {
+        SharedPreferences prefs = caller.getSharedPreferences(playerDataFilename, 0);
+        Gson decoder = new Gson();
 
-        // Only read if we don't know have the data on hand
-        // Save to file
-        FileInputStream inputStream;
-        StringBuilder sb = new StringBuilder();
-        try {
-            FileInputStream in = caller.openFileInput(playerDataFilename);
-            InputStreamReader inputStreamReader = new InputStreamReader(in);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
+        HashSet<PlayerData> result = new HashSet<>();
+        Map<String, ?> allPlayerPrefs = prefs.getAll();
+        // Iterate over all players, get and deserialise their data
+        for (String key : allPlayerPrefs.keySet()) {
+            String val;
+            try {
+                val = allPlayerPrefs.get(key).toString();
             }
-        } catch (Exception e) {
-            Toast.makeText(caller, "Error loading player data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            return new HashSet<>();
+            catch (Exception ex) {
+                continue;
+            }
+            result.add(decoder.fromJson(val, PlayerData.class));
         }
-        return new Gson().fromJson(sb.toString(), playerDataHSType);
+        return result;
     }
 
-    private static void SaveAllPlayers(final Context caller, final HashSet<PlayerData> newPlayers) {
-        // This is all we need, as we're saving stuff in memory.
-        playersThatExist = newPlayers;
+//    private static void SaveAllPlayers(final Context caller, final HashSet<PlayerData> newPlayers) {
+//
+//
+//        // Writing to file shall be asynchronous to help with stuff.
+//        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+//            @Override
+//            public Boolean doAsync() {
+//                boolean result = true;
+//                // Save to file
+//                String data = new Gson().toJson(newPlayers, playerDataHSType);
+//                FileOutputStream outputStream;
+//                try {
+//                    outputStream = caller.openFileOutput(playerDataFilename, Context.MODE_PRIVATE);
+//                    outputStream.write(data.getBytes());
+//                    outputStream.close();
+//                } catch (Exception e) {
+//                    Toast.makeText(caller, "Error saving progress: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//                    result = false;
+//                }
+//                // DONE
+//                return result;
+//            }
+//        }).create().start();
+//
+//    }
 
-        // Writing to file shall be asynchronous to help with stuff.
-        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-            @Override
-            public Boolean doAsync() {
-                boolean result = true;
-                // Save to file
-                String data = new Gson().toJson(newPlayers, playerDataHSType);
-                FileOutputStream outputStream;
-                try {
-                    outputStream = caller.openFileOutput(playerDataFilename, Context.MODE_PRIVATE);
-                    outputStream.write(data.getBytes());
-                    outputStream.close();
-                } catch (Exception e) {
-                    Toast.makeText(caller, "Error saving progress: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    result = false;
-                }
-                // DONE
-                return result;
-            }
-        }).create().start();
 
-    }
-
-
-    // The same, but for factions
-    private static HashSet<FactionData> GetSavedFactions(final Context caller) {
-        if (factionsThatExist != null) return factionsThatExist;
-
-        // Only read if we don't know have the data on hand
-        // Save to file
-        FileInputStream inputStream;
-        StringBuilder sb = new StringBuilder();
-        try {
-            FileInputStream in = caller.openFileInput(factionDataFilename);
-            InputStreamReader inputStreamReader = new InputStreamReader(in);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
-            }
-        } catch (Exception e) {
-            Toast.makeText(caller, "Error loading faction data: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            return new HashSet<>();
-        }
-        return new Gson().fromJson(sb.toString(), factionDataHSType);
-    }
-
-    private static void SaveAllFactions(final Context caller, final HashSet<FactionData> newFactions) {
-        // This is all we need, as we're saving stuff in memory.
-        factionsThatExist = newFactions;
-
-        // Writing to file shall be asynchronous to help with stuff.
-        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
-            @Override
-            public Boolean doAsync() {
-                boolean result = true;
-                // Save to file
-                String data = new Gson().toJson(newFactions, playerDataHSType);
-                FileOutputStream outputStream;
-                try {
-                    outputStream = caller.openFileOutput(factionDataFilename, Context.MODE_PRIVATE);
-                    outputStream.write(data.getBytes());
-                    outputStream.close();
-                } catch (Exception e) {
-                    Toast.makeText(caller, "Error saving progress: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    result = false;
-                }
-                // DONE
-                return result;
-            }
-        }).create().start();
-
-    }
+//    // The same, but for factions
+//    private static HashSet<FactionData> GetSavedFactions(final Context caller) {
+//        if (factionsThatExist != null) return factionsThatExist;
+//
+//        // Only read if we don't know have the data on hand
+//        // Save to file
+//        FileInputStream inputStream;
+//        StringBuilder sb = new StringBuilder();
+//        try {
+//            FileInputStream in = caller.openFileInput(factionDataFilename);
+//            InputStreamReader inputStreamReader = new InputStreamReader(in);
+//            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+//            String line;
+//            while ((line = bufferedReader.readLine()) != null) {
+//                sb.append(line);
+//            }
+//        } catch (Exception e) {
+//            Toast.makeText(caller, "Error loading faction data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//            return new HashSet<>();
+//        }
+//        return new Gson().fromJson(sb.toString(), factionDataHSType);
+//    }
+//
+//    private static void SaveAllFactions(final Context caller, final HashSet<FactionData> newFactions) {
+//        // This is all we need, as we're saving stuff in memory.
+//        factionsThatExist = newFactions;
+//
+//        // Writing to file shall be asynchronous to help with stuff.
+//        new AsyncJob.AsyncJobBuilder<Boolean>().doInBackground(new AsyncJob.AsyncAction<Boolean>() {
+//            @Override
+//            public Boolean doAsync() {
+//                boolean result = true;
+//                // Save to file
+//                String data = new Gson().toJson(newFactions, playerDataHSType);
+//                FileOutputStream outputStream;
+//                try {
+//                    outputStream = caller.openFileOutput(factionDataFilename, Context.MODE_PRIVATE);
+//                    outputStream.write(data.getBytes());
+//                    outputStream.close();
+//                } catch (Exception e) {
+//                    Toast.makeText(caller, "Error saving progress: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//                    result = false;
+//                }
+//                // DONE
+//                return result;
+//            }
+//        }).create().start();
+//
+//    }
 
 }
 

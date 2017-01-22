@@ -29,6 +29,7 @@ public class Ashery extends Fragment implements UpdateUIListener {
     private ImageView imgAsh;
     private TextView lblCurrentAsh;
 
+    private boolean canReceiveUIUpdates = false;
 
     public Ashery() { }
     public static Ashery newInstance() {
@@ -63,7 +64,7 @@ public class Ashery extends Fragment implements UpdateUIListener {
             @Override
             public void onClick(Letter selectedLetter) {
                 try {
-                    Game.onAsheryRequest(selectedLetter);
+                    Game.onAsheryRequest(getActivity(), selectedLetter);
                 }
                 catch (GrabbleAPIException e) {
                     Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -72,6 +73,7 @@ public class Ashery extends Fragment implements UpdateUIListener {
         });
 
         // Also, mustn't forget to update the UI properly - apparently this gets re-called every time we switch the pages.
+        canReceiveUIUpdates = true;
         updateUI(false);
 
         // Inflate the layout for this fragment
@@ -86,6 +88,8 @@ public class Ashery extends Fragment implements UpdateUIListener {
 
 
     private void updateUI(boolean animateAsh) {
+        if (!canReceiveUIUpdates || getContext() == null) return;
+
         // Whenever the inventory and ash amounts change, we need to reflect this
         letterSelector.setInventoryData(Game.currentPlayerData().getInventory(),
                 XPUtils.getAllDetailsForXP(Game.currentPlayerData().getXP()).traitSet().getInvCapacity());
