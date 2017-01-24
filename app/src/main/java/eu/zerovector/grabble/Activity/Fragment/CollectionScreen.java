@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import eu.zerovector.grabble.Activity.UpdateUIListener;
+import eu.zerovector.grabble.Data.Alignment;
 import eu.zerovector.grabble.Data.Letter;
 import eu.zerovector.grabble.Data.Word;
 import eu.zerovector.grabble.Data.XPUtils;
@@ -175,10 +176,27 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         // Now do the same thing with the ash that we did in CityMap
         // I think Ash looks better when it's not using a linear interpolator.
         AnimUtils.DoGenericAshAnim(lblCurrentAsh, imgAsh, currentPlayerData().getAsh());
-        // Sight and Grab ranges
+
+        // Sight and Grab ranges - count any skill modifiers too
         XPUtils.TraitSet perks = XPUtils.getPerksForLevel(levelStats.level());
-        lblCurrentGrabRange.setText(perks.getGrabRange() + " m");
-        lblCurrentSightRange.setText(perks.getSightRange() + " m");
+        Alignment curAlignment = currentPlayerData().getAlignment();
+        int curLevel = levelStats.level();
+        int extraSight = 0, extraGrab = 0;
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.Oracle)) {
+            extraSight = (int)(0.01f * perks.getSightRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        }
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.SacredWill)) {
+            extraGrab = (int)(0.01f * perks.getGrabRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        }
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.CommandingPresence)) {
+            extraSight *= 2;
+            extraGrab *= 2;
+        }
+        String sightRange = perks.getSightRange() + extraSight + " m";
+        String grabRange = perks.getGrabRange() + extraGrab + " m";
+
+        lblCurrentGrabRange.setText(grabRange);
+        lblCurrentSightRange.setText(sightRange);
 
 
 

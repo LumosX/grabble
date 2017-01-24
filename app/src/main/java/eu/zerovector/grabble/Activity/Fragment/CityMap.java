@@ -65,6 +65,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import eu.zerovector.grabble.Activity.UpdateUIListener;
+import eu.zerovector.grabble.Data.Alignment;
 import eu.zerovector.grabble.Data.Placemark;
 import eu.zerovector.grabble.Data.Word;
 import eu.zerovector.grabble.Data.XPUtils;
@@ -642,16 +643,27 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         // No matter what happens, update our location reference (after we're done moving the circles)
         currentLocation = location;
 
-        // (Whilst we're here, update the size of the circles - no need to bother animating them)
-        circleGrabRadius.setRadius(playerPerks.getGrabRange());
-        circleSightRadius.setRadius(playerPerks.getSightRange());
-
-        // Prepare the playerDetails for usage by this system
+        // Prepare the playerDetails for usage by the skills system, in particularly the Openers
         XPUtils.TraitSet.Builder modifiedPerks = new XPUtils.TraitSet.Builder(playerPerks);
-
-        if ("FALSE".equals("FAAALSE")) { // if currentPlayer.hasSkill(Skill.ORACLE)
-
+        Alignment curAlignment = currentPlayerData().getAlignment();
+        int curLevel = playerDetails.levelDetails().level();
+        int extraSight = 0, extraGrab = 0;
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.Oracle)) {
+            extraSight = (int)(0.01f * modifiedPerks.getSightRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
         }
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.SacredWill)) {
+            extraGrab = (int)(0.01f * modifiedPerks.getGrabRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        }
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.CommandingPresence)) {
+            extraSight *= 2;
+            extraGrab *= 2;
+        }
+        modifiedPerks.addSightRange(extraSight);
+        modifiedPerks.addGrabRange(extraGrab);
+
+        // (Whilst we're here, update the size of the circles - no need to bother animating them)
+        circleGrabRadius.setRadius(modifiedPerks.getGrabRange());
+        circleSightRadius.setRadius(modifiedPerks.getSightRange());
 
         // get my segment
         // get all points in segment + neighbours
@@ -665,7 +677,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         final LatLng currentCoords = MathUtils.LocationToLatLng(location);
 
         // InitMapData already requires the map data to have loaded, so mapSegmentData() shan't return null ever
-        int segmentRadius = playerPerks.getSightRange() / Game.MAP_SEGMENT_MIN_LENGTH;
+        int segmentRadius = modifiedPerks.getSightRange() / Game.MAP_SEGMENT_MIN_LENGTH;
         segmentRadius = (segmentRadius > 0) ? segmentRadius : 0;
         final List<Integer> segmentsOfInterest = Game.mapSegmentData().computeSegmentAndNeighbours(currentCoords, segmentRadius);
 

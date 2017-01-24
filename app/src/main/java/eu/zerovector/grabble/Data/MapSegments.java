@@ -14,7 +14,7 @@ import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.Utils.MathUtils;
 
 // This helps managing the map segmentation code. Relies on the const segment size in Game.java.
-// Would've done it as a nested class, but apparently you can't call a non-static nested class from a static class. Duck this language.
+// Would've done it as a nested class, but apparently you can't call a non-static nested class from a static class. duck this language.
 public class MapSegments {
     private int[][] segmentArray; // Holds segment IDs, just so we're not doing any dark magic in order to retrieve them.
     private double minLatitude, minLongitude, maxLatitude, maxLongitude; // Game area bounds.

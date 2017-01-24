@@ -37,6 +37,10 @@ public class FactionData {
         return completedWords;
     }
 
+    public int getNumberOfCompletedWords() {
+        return completedWords.size();
+    }
+
     public void setCompletedWords(HashSet<Word> completedWords) {
         this.completedWords = completedWords;
     }

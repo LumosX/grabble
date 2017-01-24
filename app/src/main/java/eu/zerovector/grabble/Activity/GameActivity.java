@@ -12,7 +12,7 @@ import android.widget.Toast;
 
 import eu.zerovector.grabble.Activity.Fragment.CityMap;
 import eu.zerovector.grabble.Activity.Fragment.CollectionHost;
-import eu.zerovector.grabble.Activity.Fragment.FactionScreen;
+import eu.zerovector.grabble.Activity.Fragment.SkillsScreen;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.R;
 import fr.castorflex.android.verticalviewpager.VerticalViewPager;
@@ -135,7 +135,7 @@ public class GameActivity extends FragmentActivity {
             switch(pos) {
                 case 0: return CollectionHost.newInstance(master);
                 case 1: return CityMap.newInstance();
-                default: return FactionScreen.newInstance();
+                default: return SkillsScreen.newInstance();
             }
         }
 

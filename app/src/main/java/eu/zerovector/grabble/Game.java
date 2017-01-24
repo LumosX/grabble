@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -394,71 +395,84 @@ public final class Game {
         loadingNewWord = true;
 
         // Put all the stuff into an AsyncJob. Find a new word, then send it back.
-        new AsyncJob.AsyncJobBuilder<Word>().doInBackground(new AsyncJob.AsyncAction<Word>() {
-            @Override
-            public Word doAsync() {
-                // Load the list of all completed words from the current faction.
-                FactionData curFaction = Network.GetFactionData(caller, currentPlayer.getCurrentFactionName());
-                // If we can't retrieve the list (should never happen), just use a blank one instead.
-                if (curFaction == null) {
-                    curFaction = new FactionData("temp", "nobody");
-                }
-                // Remove any completed words from the list we're choosing from
-                HashSet<Word> possibleWords = new HashSet<>(grabbleDict.wordSet());
-                possibleWords.removeAll(curFaction.getCompletedWords());
-                // We don't want to cycle through some ~23700 words. However, we can set a max number of iterations...
-                int wordsLeft = possibleWords.size();
-                int MAX_ITERATIONS = 500;
-                int iterations = (wordsLeft > MAX_ITERATIONS) ? MAX_ITERATIONS : wordsLeft;
-                int[] inventoryCounts = currentPlayer.getInventory().getLetterCounts();
-                // ... and the HashSet isn't sorted, which means we don't *REALLY* need to pull randoms out of it
-                Iterator iter = possibleWords.iterator(); // This iterator stuff is bizarre
-                int i = 0;
-                int wordLen = 7; // We can just hardcode it, though this is bad practice
-                int bestFoundSimilarity = -1;
-                Word selectedWord = null;
-                while (iter.hasNext() || i < iterations) {
-                    Word curWord = (Word)iter.next();
-                    //int wordLen = curWord.length(); // Use this for words of different lengths
-                    int[] curWordCounts = curWord.toInventory().getLetterCounts();
-                    // Find the similarity between the current word and the inventory.
-                    int similarity = MathUtils.ComputeKirilchevCoefficient(inventoryCounts, curWordCounts);
-                    // We want results ASAP, so the first full result is perfect (if any):
-                    if (similarity == wordLen) {
-                        selectedWord = curWord;
-                        break;
-                    }
-                    if (similarity > bestFoundSimilarity) {
-                        selectedWord = curWord;
-                        bestFoundSimilarity = similarity;
-                    }
-                    i++;
-                }
-
-                return selectedWord;
+        // Actually, no. That makes the UI shit all over itself when a word is collected.
+//        new AsyncJob.AsyncJobBuilder<Word>().doInBackground(new AsyncJob.AsyncAction<Word>() {
+//            @Override
+//            public Word doAsync() {
+        // Load the list of all completed words from the current faction.
+        FactionData curFaction = Network.GetFactionData(caller, currentPlayer.getCurrentFactionName());
+        // If we can't retrieve the list (should never happen), just use a blank one instead.
+        if (curFaction == null) {
+            curFaction = new FactionData("temp", "nobody");
+        }
+        // Remove any completed words from the list we're choosing from
+        HashSet<Word> possibleWords = new HashSet<>(grabbleDict.wordSet());
+        possibleWords.removeAll(curFaction.getCompletedWords());
+        // We don't want to cycle through some ~23700 words. However, we can set a max number of iterations...
+        int wordsLeft = possibleWords.size();
+        int MAX_ITERATIONS = 500;
+        int iterations = (wordsLeft > MAX_ITERATIONS) ? MAX_ITERATIONS : wordsLeft;
+        int[] inventoryCounts = currentPlayer.getInventory().getLetterCounts();
+        // ... and the HashSet isn't sorted, which means we don't *REALLY* need to pull randoms out of it
+        Iterator iter = possibleWords.iterator(); // This iterator stuff is bizarre
+        int i = 0;
+        int wordLen = 7; // We can just hardcode it, though this is bad practice
+        int bestFoundSimilarity = -1;
+        Word selectedWord = null;
+        while (iter.hasNext() || i < iterations) {
+            Word curWord = (Word)iter.next();
+            //int wordLen = curWord.length(); // Use this for words of different lengths
+            int[] curWordCounts = curWord.toInventory().getLetterCounts();
+            // Find the similarity between the current word and the inventory.
+            int similarity = MathUtils.ComputeKirilchevCoefficient(inventoryCounts, curWordCounts);
+            // We want results ASAP, so the first full result is perfect (if any):
+            if (similarity == wordLen) {
+                selectedWord = curWord;
+                break;
             }
-        }).doWhenFinished(new AsyncJob.AsyncResultAction<Word>() {
-            @Override
-            public void onResult(Word result) {
+            if (similarity > bestFoundSimilarity) {
+                selectedWord = curWord;
+                bestFoundSimilarity = similarity;
+            }
+            i++;
+        }
+
+//                return selectedWord;
+//            }
+//        }).doWhenFinished(new AsyncJob.AsyncResultAction<Word>() {
+//            @Override
+//            public void onResult(Word result) {
                 // DoWhenFinished is called on the main thread, I believe, so all's well:
-                currentPlayer.setCurrentWord(result);
-                loadingNewWord = false;
+//                currentPlayer.setCurrentWord(result);
+//                Log.i("GAME", "Selected new word: " + result.toString());
+
+
+        currentPlayer.setCurrentWord(selectedWord);
+        Log.i("GAME", "Selected new word: " + selectedWord.toString());
+        loadingNewWord = false;
+
+
+        // When assigning the best possible new word, we need to fill it in from the inventory
+        boolean completedNewWord = false;
+        for (Letter let : selectedWord.toLetterList()) {
+            if (selectedWord.isComplete()) completedNewWord = true;
+            else if (currentPlayer.getInventory().getAmountOfLetter(let) > 0 && selectedWord.completeLetter(let)) {
+                currentPlayer.getInventory().removeLetter(let);
+            }
+        }
+
+        // If we were smart, we'd keep a stack of best-similarity words or whatever
+        if (completedNewWord) checkRequestNewWord(caller);
+
 
                 // Finally, propagate an UI update.
-                callGlobalUIUpdate(EnumSet.noneOf(UpdateUIListener.Code.class), null);
-//                callGlobalUIUpdate(EnumSet.of(UpdateUIListener.Code.WORD_COMPLETED), null);
-            }
-        }).create().start();
 
-//        Iterator iter = grabbleDict.wordSet().iterator(); // This iterator stuff is bizarre
-//        List<Word> words = new ArrayList<>();
-//        while (iter.hasNext()) {
-//            Map.Entry pair = (Map.Entry)iter.next();
-//            // Incomplete yet words get added to the list
-//            if (!(boolean)pair.getValue()) words.add((Word)pair.getKey());
-//        }
-//        // Get a random word and assign it as the new one
-//        currentPlayer.setCurrentWord(words.get(new Random(System.currentTimeMillis()).nextInt(words.size())));
+
+
+//                callGlobalUIUpdate(EnumSet.noneOf(UpdateUIListener.Code.class), null);
+//                callGlobalUIUpdate(EnumSet.of(UpdateUIListener.Code.WORD_COMPLETED), null);
+//            }
+//        }).create().start();
 
 
 
@@ -498,12 +512,26 @@ public final class Game {
 
             if (!result) continue;
 
+            // Hook for the final Closers skill - try adding another letter if the random chance triggers
+            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), levelDetails.level(), XPUtils.Skill.CommandingPresence)) {
+                int t = new Random(System.currentTimeMillis()).nextInt(100);
+                if (t < XPUtils.Skill.CommandingPresence.getCurBonusMagnitude(levelDetails.level())) {
+                    currentPlayer.getInventory().addLetter(letter, perks.getInvCapacity());
+                }
+            }
+
             // First, check to see whether the player requires an extra ash
             int letForAsh = currentPlayer.getLettersUntilExtraAsh() - 1; // decrement automatically
             currentPlayer.decrementLettersUntilExtraAsh(1);
             if (letForAsh == 0) {
                 currentPlayer.addAsh(1);
-                currentPlayer.setLettersUntilExtraAsh(perks.getNumLettersForOneAsh());
+                int letUntilExtraAsh = perks.getNumLettersForOneAsh();
+                // Check for the relevant Opener skill
+                if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), levelDetails.level(), XPUtils.Skill.DarkLiaison) &&
+                    letUntilExtraAsh > 1) {
+                        letUntilExtraAsh -= 1;
+                }
+                currentPlayer.setLettersUntilExtraAsh(letUntilExtraAsh);
                 updateCodes.add(UpdateUIListener.Code.EXTRA_ASH_GRANTED);
             }
 
@@ -564,7 +592,8 @@ public final class Game {
     private static final int ASHERY_REQUEST_UNIDENTIFIED_ERROR = 3;
     public static void onAsheryRequest(Context caller, Letter letter) throws GrabbleAPIException {
         // As we did when grabbing a letter, we need to check whether we can fill a spot in the current word first
-        int invCap = XPUtils.getAllDetailsForXP(currentPlayer.getXP()).traitSet().getInvCapacity();
+        XPUtils.DataPair dp = XPUtils.getAllDetailsForXP(currentPlayer.getXP());
+        int invCap = dp.traitSet().getInvCapacity();
         int result = ASHERY_REQUEST_UNIDENTIFIED_ERROR;
 
         // Before everything, check whether we've got enough ash
@@ -579,7 +608,19 @@ public final class Game {
         else if (result == ASHERY_REQUEST_UNIDENTIFIED_ERROR) throw new GrabbleAPIException("Could not complete transaction");
 
         // If no errors are necessary, DO THE WORK
-        Game.currentPlayerData().removeAsh(letter.getAshCreateValue());
+        int amount = letter.getAshCreateValue();
+        // Don't forget to hook into the relevant skills
+        if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.ShadowManipulator)) {
+            int t = new Random(System.currentTimeMillis()).nextInt(100);
+            if (t < XPUtils.Skill.ShadowManipulator.getCurBonusMagnitude(dp.levelDetails().level())) {
+                amount = 0;
+            }
+        }
+        if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.BeckonerOfAsh)) {
+            float discount = XPUtils.Skill.ShadowManipulator.getCurBonusMagnitude(dp.levelDetails().level());
+            amount = (int)((1.0f - discount) * (float)amount);
+        }
+        Game.currentPlayerData().removeAsh(amount);
 
         EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
         // However, if we DID complete a word (that's why the Ashery is more complicated)...
@@ -599,10 +640,24 @@ public final class Game {
         }
     }
 
+
     public static void onCrematoriumRequest(Letter letter) throws GrabbleAPIException {
         // The Crematorium is easy - we can't complete words through it, we can only gain Ash.
         if (currentPlayer.getInventory().removeLetter(letter, letter.getNumToDestroy())) {
-            currentPlayer.addAsh(letter.getAshDestroyValue());
+            int amount = letter.getAshDestroyValue();
+            XPUtils.LevelDetails det = XPUtils.getLevelDetailsForXP(currentPlayer.getXP());
+
+            // Get the extra skill modifiers, if any
+            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), det.level(), XPUtils.Skill.AshenSoul)) {
+                amount += 1;
+            }
+            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), det.level(), XPUtils.Skill.KeepersToll)) {
+                int t = new Random(System.currentTimeMillis()).nextInt(100);
+                if (t < XPUtils.Skill.KeepersToll.getCurBonusMagnitude(det.level())) {
+                    amount += 1;
+                }
+            }
+            currentPlayer.addAsh(amount);
 
             // MUST UPDATE UI
             callGlobalUIUpdate(EnumSet.noneOf(UpdateUIListener.Code.class), currentPlayer.getCurrentWord());
@@ -611,6 +666,9 @@ public final class Game {
             throw new GrabbleAPIException("Insufficient letters to burn");
         }
     }
+
+
+
 
     public static void addUIListener(UpdateUIListener listener) {
         uiListeners.add(listener);

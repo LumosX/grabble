@@ -1,5 +1,6 @@
 package eu.zerovector.grabble.Data;
 
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -69,7 +70,7 @@ public final class XPUtils {
         int result = Collections.binarySearch(XP_REQUIREMENTS_FOR_LEVEL, curXP); // we're using an ArrayList, so it's all good
         // If we're exactly at the XP for some level, we'll get that value. We need the next one.
         if (result >= 0) return new LevelDetails(result + 1, XP_REQUIREMENTS_FOR_LEVEL.get(result), XP_REQUIREMENTS_FOR_LEVEL.get(result + 1));
-        // Otherwise, we've got: -(insertionPoint)-1, which also needs to be additionally offset by 1
+            // Otherwise, we've got: -(insertionPoint)-1, which also needs to be additionally offset by 1
         else {
             result = -result - 1;
             return new LevelDetails(result, XP_REQUIREMENTS_FOR_LEVEL.get(result-1), XP_REQUIREMENTS_FOR_LEVEL.get(result));
@@ -77,7 +78,7 @@ public final class XPUtils {
     }
 
     // And a little helper to help me return 2 ints together
-    // As it turns out, Java's "static" keyword means something completely different to C#'s. AS DUCKING USUAL.
+    // As it turns out, Java's "static" keyword means something completely different to C#'s. AS dUCKING USUAL.
     // This language sucks massive dongs, y'know.
     public static class LevelDetails {
         private int level;
@@ -189,14 +190,13 @@ public final class XPUtils {
                 curPerks.setRawAshReward(i * 10); // tenfold the level should be enough
             }
 
-            LEVEL_PERKS.add(i, curPerks.build());
+            LEVEL_PERKS.add(i, new TraitSet(curPerks.build()));
         }
 
         Log.d("TAG", "FINE2");
     }
 
     public static TraitSet getPerksForLevel(int level) {
-        if (level > MAX_LEVEL) return LEVEL_PERKS.get(MAX_LEVEL);
         return LEVEL_PERKS.get(level);
     }
 
@@ -364,11 +364,10 @@ public final class XPUtils {
         public TraitSet traitSet() {
             return tra;
         }
-
-
-        // WAIT! I CAN ACTUALLY SHOEHORN THE PATTERN HERE!
-
     }
+
+
+
 
 
     // ============== LEVEL NAMES
@@ -381,27 +380,27 @@ public final class XPUtils {
         SparseArray<LevelTierNamePair> specialNames = new SparseArray<>(21);
         //       CLOSERS💩OPENERS <-- because we programmers like 💩 like this
         String[] tierNames = new String[]{
-                     "Novice\uD83D\uDCA9Acolyte",
-                   "Accepted\uD83D\uDCA9Grunt",
-                     "Hunter\uD83D\uDCA9Bonded",
-                    "Soldier\uD83D\uDCA9Cultist",
-                    "Watcher\uD83D\uDCA9Zealot",
-                     "Keeper\uD83D\uDCA9Spireling",
-                   "Sergeant\uD83D\uDCA9Reaver",
-                    "Captain\uD83D\uDCA9Ringleader",
-                   "Guardian\uD83D\uDCA9Ravager",
-                      "Elite\uD83D\uDCA9Dedicated",
-                     "Chosen\uD83D\uDCA9Chosen",
-                   "Sentinel\uD83D\uDCA9Forsworn",
-                  "Stormcrow\uD83D\uDCA9Chief",
+                "Novice\uD83D\uDCA9Acolyte",
+                "Accepted\uD83D\uDCA9Grunt",      // LEVEL 5
+                "Hunter\uD83D\uDCA9Cultist",
+                "Soldier\uD83D\uDCA9Zealot",
+                "Watcher\uD83D\uDCA9Spireling",
+                "Keeper\uD83D\uDCA9Marauder",   // LEVEL 25
+                "Sergeant\uD83D\uDCA9Reaver",
+                "Captain\uD83D\uDCA9Ringleader",
+                "Guardian\uD83D\uDCA9Ravager",
+                "Elite\uD83D\uDCA9Dedicated",
+                "Chosen\uD83D\uDCA9Chosen",     // LEVEL 50
+                "Sentinel\uD83D\uDCA9Forsworn",
+                "Stormcrow\uD83D\uDCA9Chief",
                 "Blademaster\uD83D\uDCA9Destroyer",
-                  "Commander\uD83D\uDCA9Reaper",
-                  "Centurion\uD83D\uDCA9Spire Lord",
-                    "Prefect\uD83D\uDCA9Harbinger",
-               "High General\uD83D\uDCA9Greater Chief",
-               "Mortal Sword\uD83D\uDCA9Immortal",
-                    "Exalted\uD83D\uDCA9Revered",
-            "Eternal Prophet\uD83D\uDCA9Dark Messiah" // stacking 💩 in a pile... what am I doing with my life
+                "Commander\uD83D\uDCA9Reaper",
+                "Centurion\uD83D\uDCA9Spire Lord", // LEVEL 75
+                "Prefect\uD83D\uDCA9Harbinger",
+                "High General\uD83D\uDCA9Greater Chief",
+                "Mortal Sword\uD83D\uDCA9Immortal",
+                "Exalted\uD83D\uDCA9Revered",
+                "Eternal Prophet\uD83D\uDCA9Dark Messiah" // stacking 💩 in a pile... what am I doing with my life
         };                                            // I'm supposed to be on vacation right now...
         int index = 0;
         for (String namePair : tierNames) {
@@ -469,6 +468,157 @@ public final class XPUtils {
             this.closers += suffix;
             return this;
         }
+    }
+
+
+
+
+
+
+
+
+    // ============== SKILLS ("Perks" is already taken)
+    // We'll have four skills per faction. Not a very complex system, but rather here just to
+    // replace the ill-fated multiplayer with something else.
+    // Skill will unlock at level 5, 25, 50, 75, and will have some per-level (or constant) effect.
+    // Also, I gotta milk that <CRYPTIC> font for all it's worth, no?
+
+    // As I said, enums are the single best thing in Java
+    public enum Skill {
+        // Closers
+        Oracle(Alignment.Closers, 5, "Ⱚ", "Oracle",
+                "You see Letters from further than usual.",
+                "Sight increased by !%.",
+                new SkillWrapper() {
+                    float slope = (float)(50 - 10)/(MAX_LEVEL - 5);
+                    @Override
+                    public float getMagnitude(int level) {
+                        // At level 5, return 10; at level MAX, return 50
+                        // It's a simple linear relationship
+                        return (150.0f / 19.0f) + (level * slope);
+                    }
+                }),
+        KeepersToll(Alignment.Closers, 25, "Ⱔ", "Keeper's Toll",
+                "Burning a Letter at the Crematorium has a chance of generating 1 additional Ash.",
+                "Chance for extra Ash is !%.",
+                new SkillWrapper() {
+                    @Override
+                    public float getMagnitude(int level) {
+                        // 40% at level 100.
+                        return level * 0.4f;
+                    }
+                }),
+        SacredWill(Alignment.Closers, 50, "Ⱋ", "Sacred Will",
+                "Oracle now increases your Grab radius as well.",
+                "",
+                null),
+        CommandingPresence(Alignment.Closers, 75, "Ⱉ", "Commanding Presence",
+                "Your Oracle benefits are doubled. Additionally, every time you collect a Letter, " +
+                    "there is a slight chance a free copy of it will be added to your Inventory.",
+                "Extra Letter chance is !%.",
+                new SkillWrapper() {
+                    @Override
+                    public float getMagnitude(int level) {
+                        // 5% at level 100. One collects lots of letters after all.
+                        return level * 0.05f;
+                    }
+                }),
+
+
+
+        // Openers
+        AshenSoul(Alignment.Openers, 5, "Ⱗ", "Ashen Soul",
+                "Burning a Letter at the Crematorium generates 1 additional Ash.",
+                "",
+                null),
+        DarkLiaison(Alignment.Openers, 25, "Ⱑ", "Dark Liaison",
+                "Permanently reduces the amount of Letters needed to gain an extra Ash by 1. This amount " +
+                        "cannot go below 1.",
+                "",
+                null),
+        BeckonerOfAsh(Alignment.Openers, 50, "Ⱙ", "Beckoner of Ash",
+                "Creating Letters at the Ashery is cheaper.",
+                "Ashery discount is !%.",
+                new SkillWrapper() {
+                    float slope = (float)(25 - 20)/(MAX_LEVEL - 50); // skill unlocked on level 50, so we compensate for it
+                    @Override
+                    public float getMagnitude(int level) {
+                        // At level 50, return 20%; at level MAX, return 25%
+                        // Again, a simple linear relationship
+                        return 15 + (level * slope);
+                    }
+                }),
+        ShadowManipulator(Alignment.Openers, 75, "Ⱘ", "Shadow Manipulator",
+                "There is a chance that creating a Letter at the Ashery will cost you no Ash.",
+                "Chance for free Letter creation is !%.",
+                new SkillWrapper() {
+                    @Override
+                    public float getMagnitude(int level) {
+                        // 10% at level 100.
+                        return level * 0.1f;
+                    }
+                }),;
+
+
+        private Alignment team;
+        private int levelRequired;
+        private String iconChar;
+        private String name;
+        private String currentStatus;
+        private String description;
+        private SkillWrapper logic;
+
+        Skill(Alignment team, int levelRequired, String iconChar, String name,
+              String description, String currentStatus, SkillWrapper logic) {
+            this.description = description;
+            this.iconChar = iconChar;
+            this.levelRequired = levelRequired;
+            this.logic = logic;
+            this.name = name;
+            this.team = team;
+            this.currentStatus = currentStatus;
+        }
+
+        public String getCurrentStatus() {
+            return currentStatus;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getIconChar() {
+            return iconChar;
+        }
+
+        public int getLevelRequired() {
+            return levelRequired;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Alignment getAlignment() {
+            return team;
+        }
+
+        // Can return null values. But it won't, if we call it smartly
+        @Nullable
+        public Float getCurBonusMagnitude(int curLevel) {
+            if (logic == null) return null;
+            return logic.getMagnitude(curLevel);
+        }
+
+        private interface SkillWrapper {
+            public float getMagnitude(int level);
+        }
+    }
+
+    public static boolean LevelHasSkill(Alignment alignment, int level, Skill skill) {
+        if (skill.getAlignment() != alignment) return false;
+        if (skill.getLevelRequired() > level) return false;
+        else return true;
     }
 
 }
