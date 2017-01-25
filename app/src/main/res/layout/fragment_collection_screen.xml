@@ -103,7 +103,7 @@
             android:layout_marginTop="-18dp" />
 
         <TextView
-            android:text="100"
+            android:text="0"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/lblCurrentRank"
@@ -130,7 +130,7 @@
                 app:srcCompat="@drawable/icon_ash"
                 android:id="@+id/imgAsh" />
             <TextView
-                android:text="1000000000"
+                android:text="0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -147,8 +147,9 @@
                 android:scaleType="fitCenter"
                 app:srcCompat="@drawable/icon_xp"
                 android:id="@+id/imgXP" />
+
             <TextView
-                android:text="320000/1000000"
+                android:text="0/100"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -166,7 +167,7 @@
                 app:srcCompat="@drawable/icon_grab"
                 android:id="@+id/imgGrab" />
             <TextView
-                android:text="600 m"
+                android:text="10 m"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/lblCurrentGrabRange"
@@ -181,7 +182,7 @@
                 app:srcCompat="@drawable/icon_sight"
                 android:id="@+id/imgSight" />
             <TextView
-                android:text="600 m"
+                android:text="20 m"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/lblCurrentSightRange"

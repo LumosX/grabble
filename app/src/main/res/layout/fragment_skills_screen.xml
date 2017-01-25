@@ -72,7 +72,7 @@
         android:layout_marginTop="6dp" />
 
     <TextView
-        android:text="23869/23869"
+        android:text="0/23869"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/lblCompletedWords"
