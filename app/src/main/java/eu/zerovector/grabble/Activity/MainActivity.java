@@ -216,6 +216,9 @@ public class MainActivity extends AppCompatActivity {
                 tbFactionName.getText().toString(),
                 registrantAlignment);
         try {
+            // I'd've bothered hashing the password, but I'd've done it server-side; besides,
+            // that's of no relevance at all right now - the MP died anyways
+
             Network.Register(this, registrant, tbConfirmPassword.getText().toString());
             // Automatically attempt to log in if all went well.
             Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();

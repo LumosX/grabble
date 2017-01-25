@@ -8,7 +8,7 @@
     <string name="infoOpeners"><i>... and so the corruption and decay that is humanity must be eradicated. Open the portal to the Far Realm; let the Old Ones in. Cleanse it all, and purify this wretched world. \</i></string>
 
     <!-- UI STUFF -->
-    <string name="lblRightArrowFaction">Faction ▶</string>
+    <string name="lblRightArrowFaction">Skills ▶</string>
     <string name="lblLeftArrowCityMap">◀ City Map</string>
     <string name="lblRightArrowCityMap">City Map ▶</string>
     <string name="lblUpArrowAshery">▲ Ashery</string>

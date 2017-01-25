@@ -55,6 +55,7 @@ public final class Game {
     // HARDCODED GAME CONSTANTS
     public static final int GLOBAL_ACTIVITY_RESULT_KILL = 0;
     public static final int GLOBAL_ACTIVITY_RESULT_LOGOUT = 1;
+    private static final Word WORD_CODE_GAME_COMPLETED = new Word("DONE!");
 
     // APPLICATION CONTEXT REFERENCE
 
@@ -361,7 +362,9 @@ public final class Game {
         isPlayerLoggedIn = true;
 
         // If the data managed to load before the log-in process, check if the player needs a new word
-        if (isDictLoaded && isMapDataLoaded) checkRequestNewWord(mainActivity);
+        if (isDictLoaded && isMapDataLoaded) {
+            currentPlayer.setCurrentWord(checkRequestNewWord(mainActivity));
+        }
     }
     public static void onLogout(Context gameActivity) {
         // Save one last time, just to be sure no progress is lost
@@ -377,29 +380,27 @@ public final class Game {
         isMapDataLoaded = result.mapDataOK;
 
         // if the player managed to login before the data loads, check whether he/she needs a new word
-        if (isPlayerLoggedIn) checkRequestNewWord(caller);
+        if (isPlayerLoggedIn) {
+            currentPlayer.setCurrentWord(checkRequestNewWord(caller));
+        }
     }
 
     // We can't have a situation where there isn't a word, so we need to get a new one in case we need it
-    public static void checkRequestNewWord(final Context caller) {
+    public static Word checkRequestNewWord(final Context caller) {
+        // Set the "locking" var. We'll be doing all this iteration on a second thread.
+        // Actually, we won't, so forget this.
+        // loadingNewWord = true;
+
         // However, this is only allowed to happen once the dict has been loaded
-        if (!isDictLoaded) return;
+        if (!isDictLoaded) return null;
         // We need to see if the current word has been completed, and reassign a new word if necessary
         Word oldWord = currentPlayer.getCurrentWord();
 
-        // (Note: I decided to deMorgan these out into separate statements. Less nesting, more readability.)
-        // EDIT: there used to be more conditions, too
-        if (oldWord != null) return;
-        if (loadingNewWord) return;
+        // abort if we don't need a new word
+        if (oldWord != null && !oldWord.isComplete()) return oldWord;
+        //if (loadingNewWord) return null; // this is also irrelevant now
 
-        // Set the "locking" var. We'll be doing all this iteration on a second thread.
-        loadingNewWord = true;
 
-        // Put all the stuff into an AsyncJob. Find a new word, then send it back.
-        // Actually, no. That makes the UI shit all over itself when a word is collected.
-//        new AsyncJob.AsyncJobBuilder<Word>().doInBackground(new AsyncJob.AsyncAction<Word>() {
-//            @Override
-//            public Word doAsync() {
         // Load the list of all completed words from the current faction.
         FactionData curFaction = Network.GetFactionData(caller, currentPlayer.getCurrentFactionName());
         // If we can't retrieve the list (should never happen), just use a blank one instead.
@@ -411,6 +412,10 @@ public final class Game {
         possibleWords.removeAll(curFaction.getCompletedWords());
         // We don't want to cycle through some ~23700 words. However, we can set a max number of iterations...
         int wordsLeft = possibleWords.size();
+
+        // half-arsed win condition?
+        if (wordsLeft == 0) return WORD_CODE_GAME_COMPLETED;
+
         int MAX_ITERATIONS = 500;
         int iterations = (wordsLeft > MAX_ITERATIONS) ? MAX_ITERATIONS : wordsLeft;
         int[] inventoryCounts = currentPlayer.getInventory().getLetterCounts();
@@ -438,46 +443,18 @@ public final class Game {
             i++;
         }
 
-//                return selectedWord;
-//            }
-//        }).doWhenFinished(new AsyncJob.AsyncResultAction<Word>() {
-//            @Override
-//            public void onResult(Word result) {
-                // DoWhenFinished is called on the main thread, I believe, so all's well:
-//                currentPlayer.setCurrentWord(result);
-//                Log.i("GAME", "Selected new word: " + result.toString());
-
-
-        currentPlayer.setCurrentWord(selectedWord);
         Log.i("GAME", "Selected new word: " + selectedWord.toString());
-        loadingNewWord = false;
+        //loadingNewWord = false;
 
 
         // When assigning the best possible new word, we need to fill it in from the inventory
-        boolean completedNewWord = false;
         for (Letter let : selectedWord.toLetterList()) {
-            if (selectedWord.isComplete()) completedNewWord = true;
-            else if (currentPlayer.getInventory().getAmountOfLetter(let) > 0 && selectedWord.completeLetter(let)) {
+            if (currentPlayer.getInventory().getAmountOfLetter(let) > 0 && selectedWord.completeLetter(let)) {
                 currentPlayer.getInventory().removeLetter(let);
             }
         }
-        // Also must check again after we're done with the word
-        if (selectedWord.isComplete()) completedNewWord = true;
 
-
-
-
-                // Finally, propagate a UI update.
-
-
-
-//                callGlobalUIUpdate(EnumSet.noneOf(UpdateUIListener.Code.class), null);
-//                callGlobalUIUpdate(EnumSet.of(UpdateUIListener.Code.WORD_COMPLETED), null);
-//            }
-//        }).create().start();
-
-
-
+        return selectedWord;
     }
 
     // This is called whenever we approach a bunch of letters within grabbing distance and try to take them.
@@ -546,23 +523,7 @@ public final class Game {
             if (!loadingNewWord && curWord.isComplete()) {
                 // To not duck anything up, we need to put a loop in here.
                 updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
-                // Load faction, set word as completed, save faction
-                FactionData currentFaction = Network.GetFactionData(caller, currentPlayer.getCurrentFactionName());
-                boolean canContinue = false;
-                do {
-                    currentFaction.addCompletedWord(curWord);
-                    Network.SaveFactionData(caller, currentFaction);
-                    // Also notify anything that needs to know this happened
-                    onWordCompleted(caller);
-                    curWord = currentPlayer.getCurrentWord(); // Update this reference (SLOPPY!)
-                    // OnWordCompleted returns a new word, already placed in curWord. It also tries
-                    // to complete as much of it as possible. If it's completed entirely, we need a NEW one.
-                    if (!curWord.isComplete()) canContinue = true;
-                    if (!canContinue) Log.d("GAME", "Newly-chosen word already completed; repeating");
-                    // Therefore, we need to loop until as many words as possible have been completed.
-                    // Yeah, this is very inefficient, I know.
-                }
-                while (!canContinue);
+                onWordCompleted(caller);
             }
 
             // And finally, if we've levelled up, grant the extra ash reward (if there is one)
@@ -590,13 +551,44 @@ public final class Game {
         return true;
     }
 
-    // It had to be done...
     private static void onWordCompleted(Context caller) {
-        currentPlayer.addAsh(currentPlayer.getCurrentWord().ashDestroyValue());
-        Network.CompleteWordForFaction(currentPlayer.getCurrentWord(), currentPlayer.getCurrentFactionName());
-        // ORDERING!
-        currentPlayer.setCurrentWord(null);
-        checkRequestNewWord(caller);
+        // Load faction, set word as completed, save faction
+        FactionData currentFaction = Network.GetFactionData(caller, currentPlayer.getCurrentFactionName());
+        int extraWordsDone = 0;
+        Word newWord = null;
+        do {
+            // Notify everything needed that a word has been completed, award Ash
+            Word curWord = currentPlayer.getCurrentWord();
+            currentFaction.addCompletedWord(curWord);
+            currentPlayer.addAsh(curWord.ashDestroyValue());
+            Network.SaveFactionData(caller, currentFaction);
+
+            // ORDERING!
+            currentPlayer.setCurrentWord(null);
+            // CheckRequestNewWord returns a new word, after trying to complete it as much as possible
+            // by drawing letters from the inventory.
+            newWord = checkRequestNewWord(caller);
+
+            // Check if the player won the game by some chance. If he did, we need to get out of here.
+            if (newWord.equals(WORD_CODE_GAME_COMPLETED)) {
+                Toast.makeText(caller, "Congratulations! YOU WON THE GAME!", Toast.LENGTH_LONG).show();
+                break;
+            }
+
+            currentPlayer.setCurrentWord(newWord);
+
+            // If the new word is completed entirely, we need a NEW one, i.e. continue with the loop.
+            if (!newWord.isComplete()) break;
+            Log.d("GAME", "Newly-chosen word already completed; repeating");
+            // Therefore, we need to loop until as many words as possible have been completed.
+            // Yeah, this is very inefficient, I know.
+            extraWordsDone++;
+        }
+        while (true);
+
+        if (!newWord.equals(WORD_CODE_GAME_COMPLETED) && extraWordsDone > 0) {
+            Toast.makeText(caller, "Completed " + extraWordsDone + " words from the Inventory!", Toast.LENGTH_LONG).show();
+        }
     }
 
     // The Ashery and Crematorium need to work from here, otherwise we end up tossing the current state all over the place

@@ -13,10 +13,10 @@ import eu.zerovector.grabble.Utils.RomanNumber;
 public final class XPUtils {
     // ============== XP STUFF
     // The absolute total maximum XP that can be gathered from the entire dictionary is about 1.1M.
-    private static final int XP_FOR_FIRST_LEVEL = 100;
-    private static final int XP_FOR_MAX_LEVEL = 1000000;
+    public static final int XP_FOR_FIRST_LEVEL = 100;
+    public static final int XP_FOR_MAX_LEVEL = 1000000;
     // This one is personal preference.
-    private static final int MAX_LEVEL = 100;
+    public static final int MAX_LEVEL = 100;
     private static ArrayList<Integer> XP_REQUIREMENTS_FOR_LEVEL = new ArrayList<>(MAX_LEVEL); // level 0 exclusive
 
     // First static block: Init XP-by-level list using l337 maths
@@ -380,26 +380,26 @@ public final class XPUtils {
         SparseArray<LevelTierNamePair> specialNames = new SparseArray<>(21);
         //       CLOSERS💩OPENERS <-- because we programmers like 💩 like this
         String[] tierNames = new String[]{
-                "Novice\uD83D\uDCA9Acolyte",
-                "Accepted\uD83D\uDCA9Grunt",      // LEVEL 5
-                "Hunter\uD83D\uDCA9Cultist",
-                "Soldier\uD83D\uDCA9Zealot",
-                "Watcher\uD83D\uDCA9Spireling",
-                "Keeper\uD83D\uDCA9Marauder",   // LEVEL 25
-                "Sergeant\uD83D\uDCA9Reaver",
-                "Captain\uD83D\uDCA9Ringleader",
-                "Guardian\uD83D\uDCA9Ravager",
-                "Elite\uD83D\uDCA9Dedicated",
-                "Chosen\uD83D\uDCA9Chosen",     // LEVEL 50
-                "Sentinel\uD83D\uDCA9Forsworn",
-                "Stormcrow\uD83D\uDCA9Chief",
-                "Blademaster\uD83D\uDCA9Destroyer",
-                "Commander\uD83D\uDCA9Reaper",
-                "Centurion\uD83D\uDCA9Spire Lord", // LEVEL 75
-                "Prefect\uD83D\uDCA9Harbinger",
-                "High General\uD83D\uDCA9Greater Chief",
-                "Mortal Sword\uD83D\uDCA9Immortal",
-                "Exalted\uD83D\uDCA9Revered",
+                         "Novice\uD83D\uDCA9Acolyte",
+                       "Accepted\uD83D\uDCA9Grunt",      // LEVEL 5
+                         "Hunter\uD83D\uDCA9Cultist",
+                        "Soldier\uD83D\uDCA9Zealot",
+                        "Watcher\uD83D\uDCA9Spireling",
+                         "Keeper\uD83D\uDCA9Reaver",     // LEVEL 25
+                       "Sergeant\uD83D\uDCA9Marauder",
+                        "Captain\uD83D\uDCA9Ringleader",
+                       "Guardian\uD83D\uDCA9Ravager",
+                          "Elite\uD83D\uDCA9Dedicated",
+                         "Chosen\uD83D\uDCA9Chosen",     // LEVEL 50
+                       "Sentinel\uD83D\uDCA9Forsworn",
+                      "Stormcrow\uD83D\uDCA9Chief",
+                    "Blademaster\uD83D\uDCA9Destroyer",
+                      "Commander\uD83D\uDCA9Reaper",
+                      "Centurion\uD83D\uDCA9Spire Lord", // LEVEL 75
+                        "Prefect\uD83D\uDCA9Harbinger",
+                   "High General\uD83D\uDCA9Greater Chief",
+                   "Mortal Sword\uD83D\uDCA9Immortal",
+                        "Exalted\uD83D\uDCA9Revered",
                 "Eternal Prophet\uD83D\uDCA9Dark Messiah" // stacking 💩 in a pile... what am I doing with my life
         };                                            // I'm supposed to be on vacation right now...
         int index = 0;

@@ -190,7 +190,7 @@
                     android:background="@color/White" />
 
                 <TextView
-                    android:text="Your Oracle benefits are now achieved twice as fast, and your minimum Sight range is increased additionally. Oracle increases this heightened range even further.\nI stand for the light, and this is exceptionally long. A page of TypeScript contains 50 lines with 80 chars per line."
+                    android:text="Your Oracle benefits are now achieved twice as fast, and your minimum Sight range is increased additionally. Oracle increases this heightened range even further. I stand for the light, and this is exceptionally long. A page of TypeScript contains 50 lines with 80 chars per line. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed tempor via Appia, dolor."
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/lblSkillDesc"

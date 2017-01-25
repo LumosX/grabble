@@ -87,17 +87,24 @@ public final class AnimUtils {
     public static void DoGenericAshAnim(final TextView ashAmountLabel, final ImageView ashIcon,
                                         final int targetAshAmount, int durationMsec) {
         int oldAsh = Integer.valueOf(ashAmountLabel.getText().toString());
+
+        // Truncate super-long values, i.e. ones starting from 10 million.
+        int maxNonTruncatedAsh = 9999999;
+        final boolean truncate = (targetAshAmount > 9999999);
+        final String truncatedString = maxNonTruncatedAsh + "+";
+
         final int startingColour = 0xffffffff;
         final int endingColour = 0x0000000;
         final ArgbEvaluator colourEval = new ArgbEvaluator();
         if (oldAsh != targetAshAmount) {
             ValueAnimator animator = new ValueAnimator();
             animator.setIntValues(oldAsh, targetAshAmount);
-            animator.setFloatValues(0.0f, 1.0f);
+            animator.setFloatValues(0.0f, 1.0f); // This actually seems to work, which is pretty good
             animator.setDuration(durationMsec);
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    ashAmountLabel.setText(String.valueOf((int)animation.getAnimatedValue()));
+                    ashAmountLabel.setText((truncate) ? truncatedString :
+                            String.valueOf((int)animation.getAnimatedValue()));
                     int curColour = (int)colourEval.evaluate(animation.getAnimatedFraction(), startingColour, endingColour);
                     ashIcon.setColorFilter(curColour);
                 }
@@ -106,13 +113,13 @@ public final class AnimUtils {
             animator.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    ashAmountLabel.setText(String.valueOf(targetAshAmount));
+                    ashAmountLabel.setText((truncate) ? truncatedString : String.valueOf(targetAshAmount));
                     ashIcon.setColorFilter(endingColour);
                 }
 
                 @Override
                 public void onAnimationCancel(Animator animation) {
-                    ashAmountLabel.setText(String.valueOf(targetAshAmount));
+                    ashAmountLabel.setText((truncate) ? truncatedString : String.valueOf(targetAshAmount));
                     ashIcon.setColorFilter(endingColour);
                 }
             });

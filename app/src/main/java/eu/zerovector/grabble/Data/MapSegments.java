@@ -22,6 +22,10 @@ public class MapSegments {
     private double deltaLatitude, deltaLongitude; // Lat/lon deltas (distance per segment, in degrees). Same reason.
     private int numLatSegments, numLonSegments; // And also remember how many segments there are, because why not.
 
+    public MapSegments(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude) {
+        this(minLatitude, maxLatitude, minLongitude, maxLongitude, "");
+    }
+
     public MapSegments(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude, String formatString) {
         // If we aren't going to do any formatting, just init the values.
         if (formatString.equals("")) {
@@ -122,14 +126,15 @@ public class MapSegments {
                                 continue; // were on edge, cuz were edgy kidz
                                 // yolo swag JB, taylor swifts my homie
 
-                                // Note, added later: I don't remember what that was supposed to mean...
+                                // Note, added later: I don't remember what those comments were supposed to mean...
                             }
                         }
                     }
                 }
             }
         }
-        Log.d("HAYAYA", "checked segments: " + neighbours.size() + ", raidus = " + radius + ", supposed to be:" + Math.pow(radius * 2 + 1, 2));
+        Log.d("MapSegments", "checked segments: " + neighbours.size() + ", radius = " + radius +
+                ", supposed to be:" + Math.pow(radius * 2 + 1, 2));
         // What a terribly inelegant function.
         return neighbours;
     }
@@ -142,7 +147,11 @@ public class MapSegments {
         return result;
     }
 
+    public int getNumLonSegments() {
+        return numLonSegments;
+    }
 
-
-
+    public int getNumLatSegments() {
+        return numLatSegments;
+    }
 }

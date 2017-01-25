@@ -11,7 +11,6 @@ import java.util.Map;
 
 import eu.zerovector.grabble.Data.FactionData;
 import eu.zerovector.grabble.Data.PlayerData;
-import eu.zerovector.grabble.Data.Word;
 import eu.zerovector.grabble.Utils.GrabbleAPIException;
 
 // A static class that shall hold all network-related functionality.
@@ -83,8 +82,11 @@ public final class Network {
 
         // Faction name
         int MIN_FAC_NAME_LEN = 6;
+        int MAX_FAC_NAME_LEN = 100; // That much should be more than enough
         if (registrant.getCreatedFactionName().length() < MIN_FAC_NAME_LEN)
             throw new GrabbleAPIException("Faction name must be at least " + MIN_FAC_NAME_LEN + " chars");
+        if (registrant.getCreatedFactionName().length() > MAX_FAC_NAME_LEN)
+            throw new GrabbleAPIException("Faction name must be " + MIN_FAC_NAME_LEN + " chars at most");
 
         // If all OK, register player:
         SavePlayerData(caller, registrant);
@@ -132,10 +134,6 @@ public final class Network {
             Log.e("NETWORK", "Couldn't save faction data: " + ex.getMessage());
             return null;
         }
-    }
-
-    public static void CompleteWordForFaction(Word completedWord, String factionName) {
-        // TODO NOTIFY FACTION THAT A WORD HAS BEEN COMPLETED
     }
 
 
