@@ -92,7 +92,7 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         levelUpAnimRunning = false;
 
         // debug
-        Game.currentPlayerData().setXP(1000000);
+        //Game.currentPlayerData().setXP(34700);
 
         // Link up to the Game class
         Game.addUIListener(this);
@@ -182,13 +182,13 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         Alignment curAlignment = currentPlayerData().getAlignment();
         int curLevel = levelStats.level();
         int extraSight = 0, extraGrab = 0;
-        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.Oracle)) {
-            extraSight = (int)(0.01f * perks.getSightRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.ORACLE)) {
+            extraSight = (int)(0.01f * perks.getSightRange() * XPUtils.Skill.ORACLE.getCurBonusMagnitude(curLevel));
         }
-        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.SacredWill)) {
-            extraGrab = (int)(0.01f * perks.getGrabRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.SACRED_WILL)) {
+            extraGrab = (int)(0.01f * perks.getGrabRange() * XPUtils.Skill.ORACLE.getCurBonusMagnitude(curLevel));
         }
-        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.CommandingPresence)) {
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.COMMANDING_PRESENCE)) {
             extraSight *= 2;
             extraGrab *= 2;
         }

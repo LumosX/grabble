@@ -13,7 +13,6 @@
     <color name="hint_colour">#FFD2D2D2</color>
 
     <!-- Defaults were nowhere to be seen, so I added some myself. -->
-    <!-- Thank God for http://stackoverflow.com/questions/3769762/android-color-xml-resource-file -->
     <!-- After adding these, even more colours seem to have disappeared. Seriously, WTF. -->
     <color name="White">#ffffff</color>
     <color name="Ivory">#FFFFF0</color>

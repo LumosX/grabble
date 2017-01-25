@@ -2,7 +2,6 @@ package eu.zerovector.grabble.Utils;
 
 import java.util.TreeMap;
 
-// Wish I could say I made this, but I didn't: http://stackoverflow.com/a/19759564
 public class RomanNumber {
     private final static TreeMap<Integer, String> map = new TreeMap<>();
     static {
@@ -20,12 +19,11 @@ public class RomanNumber {
         map.put(4, "IV");
         map.put(1, "I");
     }
-    public static final String make(int number) {
+    public static String make(int number) {
         int l = map.floorKey(number);
         if (number == l) {
             return map.get(number);
         }
         return map.get(l) + make(number-l);
     }
-
 }

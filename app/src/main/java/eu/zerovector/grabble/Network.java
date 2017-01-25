@@ -41,11 +41,9 @@ public final class Network {
 
     public static void Register(Context caller, PlayerData registrant, String confirmPass) throws GrabbleAPIException {
         // If email is shoddy, throw
-        // Inspired by StackOverflow: http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
         if (!registrant.getEmail().matches("^.+@.+(\\.[^\\.]+)+$"))
             throw new GrabbleAPIException("Email address not valid");
 
-        // Bits and bobs lifted from StackOverflow: http://stackoverflow.com/questions/3802192/regexp-java-for-password-validation
         // If passwords don't match, throw
         if (!registrant.getPassword().equals(confirmPass))
             throw new GrabbleAPIException("Passwords don't match");

@@ -24,6 +24,7 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.zerovector.grabble.Data.Alignment;
 import eu.zerovector.grabble.Data.Inventory;
 import eu.zerovector.grabble.Data.Letter;
 import eu.zerovector.grabble.Data.XPUtils;
@@ -338,9 +339,25 @@ public class LetterSelector extends RelativeLayout {
     }
 
     private int getActionAshValue() {
-        if (currentMode == ModusOperandi.Ashery)
-            return selectedLetter.getAshCreateValue();
-        else return selectedLetter.getAshDestroyValue();
+        // We also need to hook into the various skills.
+        XPUtils.LevelDetails det = XPUtils.getLevelDetailsForXP(Game.currentPlayerData().getXP());
+        Alignment playerTeam = Game.currentPlayerData().getAlignment();
+        if (currentMode == ModusOperandi.Ashery) {
+            int amount = selectedLetter.getAshCreateValue();
+
+            if (XPUtils.LevelHasSkill(playerTeam, det.level(), XPUtils.Skill.SPIRE_AGENTS)) {
+                float discount = XPUtils.Skill.SPIRE_AGENTS.getCurBonusMagnitude(det.level());
+                amount = (int)((1.0f - discount) * (float)amount);
+            }
+            return amount;
+        }
+        else {
+            int amount = selectedLetter.getAshDestroyValue();
+            if (XPUtils.LevelHasSkill(playerTeam, det.level(), XPUtils.Skill.ASHEN_SOUL)) {
+                amount += 1;
+            }
+            return amount;
+        }
     }
 
     private String getLetSelInvCount() {

@@ -8,8 +8,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
-// Lifted from http://stackoverflow.com/a/30873744
-// Modified it a little bit to better serve my needs
 class ProgressDrawable extends Drawable {
     private int numSegments = 6;
     private final int mForeground;

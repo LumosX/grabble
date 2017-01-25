@@ -20,9 +20,6 @@ import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 // We'll be using lateral navigation inside this activity for the entire game content.
-// Done with the help of StackOverflow (because it's too convoluted otherwise)
-// Link: http://stackoverflow.com/questions/18413309/how-to-implement-a-viewpager-with-different-fragments-layouts
-// I read more stuff too, but who remembers all the links
 public class GameActivity extends FragmentActivity {
 
     private ViewPager masterPager;

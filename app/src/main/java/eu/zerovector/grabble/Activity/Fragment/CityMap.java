@@ -648,13 +648,13 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         Alignment curAlignment = currentPlayerData().getAlignment();
         int curLevel = playerDetails.levelDetails().level();
         int extraSight = 0, extraGrab = 0;
-        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.Oracle)) {
-            extraSight = (int)(0.01f * modifiedPerks.getSightRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.ORACLE)) {
+            extraSight = (int)(0.01f * modifiedPerks.getSightRange() * XPUtils.Skill.ORACLE.getCurBonusMagnitude(curLevel));
         }
-        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.SacredWill)) {
-            extraGrab = (int)(0.01f * modifiedPerks.getGrabRange() * XPUtils.Skill.Oracle.getCurBonusMagnitude(curLevel));
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.SACRED_WILL)) {
+            extraGrab = (int)(0.01f * modifiedPerks.getGrabRange() * XPUtils.Skill.ORACLE.getCurBonusMagnitude(curLevel));
         }
-        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.CommandingPresence)) {
+        if (XPUtils.LevelHasSkill(curAlignment, curLevel, XPUtils.Skill.COMMANDING_PRESENCE)) {
             extraSight *= 2;
             extraGrab *= 2;
         }
@@ -782,7 +782,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         // CURRENT WORD
         Word newWord = currentPlayerData().getCurrentWord();
         // If the word hasn't been initialised yet, reflect the loading process that's still taking place.
-        Word placeholder = new Word("--WAIT--");
+        Word placeholder = new Word("WAIT");
         if (newWord == null) {
             newWord = placeholder;
             // Also request a new word if we have to. (Though this should be unnecessary.)
@@ -834,6 +834,10 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         XPUtils.TraitSet playerPerks = XPUtils.getPerksForLevel(levelDetails.level());
         ProgressDrawable drawable = (ProgressDrawable)pbLettersForAsh.getProgressDrawable();
         int numLetForAsh = playerPerks.getNumLettersForOneAsh();
+        if (XPUtils.LevelHasSkill(currentPlayerData().getAlignment(), levelDetails.level(), XPUtils.Skill.DUSTBECKON) &&
+            numLetForAsh > 1) {
+            numLetForAsh -= 1;
+        }
         if (drawable.getNumSegments() != numLetForAsh) {
             drawable.setNumSegments(numLetForAsh);
         }
@@ -881,10 +885,11 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
             updateCurWordView(targetCurWordTextSpan, curWordAnimDuration);
         }
         // If we did COMPLETE a word, make it fancier. Animate same word to goldenrod first, then return to normal
-        else {
+        else if (!wordCompleteAnimRunning) {
             wordCompleteAnimRunning = true;
             String colour = Integer.toHexString(ContextCompat.getColor(parentContext, R.color.Goldenrod));
-            String targetString = "<font color=#" + colour.substring(2) + ">" + lblCurrentWord.getText().toString() + "</colour>";
+            TextView targetView = (curWordAuxVisible) ? lblCurrentWordAux : lblCurrentWord;
+            String targetString = "<font color=#" + colour.substring(2) + ">" + targetView.getText().toString() + "</colour>";
             Spanned goldenText = AnimUtils.FromHTML(targetString);
             updateCurWordView(goldenText, (int)(curWordAnimDuration * 1.25f)); // This will animate it to Goldenrod
             // And this bullshit will return it to normal
@@ -893,11 +898,11 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                     .setDuration(1).setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            lblCurrentWordCompletion.animate().setListener(null);
                             updateCurWordView(targetCurWordTextSpan, curWordAnimDuration);
                             wordCompleteAnimRunning = false;
+                            lblCurrentWordCompletion.animate().setListener(null);
                         }
-                    });
+                    }).start(); // calling Start here turned out to be quite important
         }
 
 
@@ -909,7 +914,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
 
     }
 
-    private void updateCurWordView(Spanned targetCurWordTextSpan, int fadeDurationMsec) {
+    private void updateCurWordView(final Spanned targetCurWordTextSpan, int fadeDurationMsec) {
         // Fade between the current and the auxiliary textView.
         // if Aux is "on top", fade it out, update the real one and fade it in (else do the opposite)
         if (curWordAuxVisible) {
@@ -922,6 +927,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
             lblCurrentWord.animate().alpha(0.0f).setDuration(fadeDurationMsec);
             lblCurrentWordAux.animate().alpha(1.0f).setDuration(fadeDurationMsec);
         }
+
         curWordAuxVisible ^= true; // toggle the boolean var by using clever XOR-ing.
     }
 }

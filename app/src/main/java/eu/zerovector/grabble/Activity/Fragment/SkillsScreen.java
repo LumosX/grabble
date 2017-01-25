@@ -80,10 +80,10 @@ public class SkillsScreen extends Fragment implements UpdateUIListener {
         skillsEnabled = new boolean[] {false, false, false, false};
         currentSkills = new XPUtils.Skill[4];
 
-        btnSkill1.setOnClickListener(btnSkills_click);
-        btnSkill2.setOnClickListener(btnSkills_click);
-        btnSkill3.setOnClickListener(btnSkills_click);
-        btnSkill4.setOnClickListener(btnSkills_click);
+        btnSkill1.setOnClickListener(skillButtonsListener);
+        btnSkill2.setOnClickListener(skillButtonsListener);
+        btnSkill3.setOnClickListener(skillButtonsListener);
+        btnSkill4.setOnClickListener(skillButtonsListener);
 
         Alignment alignment = currentPlayerData().getAlignment();
         int curLevel = XPUtils.getLevelDetailsForXP(currentPlayerData().getXP()).level();
@@ -120,7 +120,7 @@ public class SkillsScreen extends Fragment implements UpdateUIListener {
         updateUI();
 
         // Now select the first skill
-        selectSkill(0);
+        skillButtonsListener.onClick(btnSkill1);
 
         return view;
     }
@@ -132,9 +132,9 @@ public class SkillsScreen extends Fragment implements UpdateUIListener {
         int curLevel = XPUtils.getLevelDetailsForXP(currentPlayerData().getXP()).level();
         XPUtils.Skill curSkill = currentSkills[index];
 
-        lblSkillName.setText(curSkill.getName());
+        lblSkillName.setText(curSkill.getName().toUpperCase());
         lblSkillDesc.setText(curSkill.getDescription());
-        boolean curSkillUnlocked = curSkill.getLevelRequired() < curLevel;
+        boolean curSkillUnlocked = curSkill.getLevelRequired() <= curLevel;
         Float curBonus = curSkill.getCurBonusMagnitude(curLevel);
         String extraString = (curSkillUnlocked) ?
                 "At current (Rank " + curLevel + "):" : "Skill unlocked at Rank " + curSkill.getLevelRequired();
@@ -153,7 +153,7 @@ public class SkillsScreen extends Fragment implements UpdateUIListener {
 
 
     // This handles all skill buttons.
-    private View.OnClickListener btnSkills_click = new View.OnClickListener() {
+    private View.OnClickListener skillButtonsListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             int curLevel = XPUtils.getLevelDetailsForXP(currentPlayerData().getXP()).level();

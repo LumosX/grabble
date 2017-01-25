@@ -17,7 +17,7 @@
         android:layout_alignParentStart="true" />
 
     <TextView
-        android:text="SACRED CULT OF THE MORNING GODDESS"
+        android:text="EXCEPTIONALLY LONG FACTION NAME THAT SPANS THREE LINES"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/lblFactionName"
@@ -156,7 +156,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginEnd="5dp"
-            android:layout_marginStart="0dp"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:background="@drawable/layout_skillsdesc_border">
 
             <RelativeLayout
@@ -167,18 +170,27 @@
                 android:layout_marginEnd="10dp">
 
                 <TextView
-                    android:text="Secrets of the Chosen\n(PASSIVE)"
+                    android:text="Secrets of the Chosen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/lblSkillName"
                     android:textColor="@color/White"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:gravity="center"
                     android:layout_alignParentStart="true"
-                    android:layout_marginTop="6dp" />
+                    android:layout_marginTop="2dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_below="@id/lblSkillName"
+                    android:background="@color/White" />
 
                 <TextView
-                    android:text="Your Oracle benefits are now achieved twice as fast, and your minimum Sight range is increased additionally. Oracle increases this heightened range even further."
+                    android:text="Your Oracle benefits are now achieved twice as fast, and your minimum Sight range is increased additionally. Oracle increases this heightened range even further.\nI stand for the light, and this is exceptionally long. A page of TypeScript contains 50 lines with 80 chars per line."
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/lblSkillDesc"
@@ -186,7 +198,16 @@
                     android:textColor="@color/White"
                     android:textSize="16sp"
                     android:layout_alignParentStart="true"
-                    android:layout_marginTop="6dp" />
+                    android:layout_marginTop="8dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_below="@id/lblSkillDesc"
+                    android:background="@color/UI_AshGrey" />
 
                 <TextView
                     android:text="At current rank (100):"
@@ -194,10 +215,10 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/lblAtCurrentColon"
                     android:layout_below="@id/lblSkillDesc"
-                    android:textColor="@color/LightGrey"
+                    android:textColor="@color/UI_AshGrey"
                     android:textSize="16sp"
                     android:layout_alignParentStart="true"
-                    android:layout_marginTop="6dp" />
+                    android:layout_marginTop="16dp" />
 
                 <TextView
                     android:text="Current improvement is 10%"
@@ -209,6 +230,13 @@
                     android:textSize="16sp"
                     android:layout_alignParentStart="true"
                     android:layout_marginTop="6dp" />
+
+                <!-- This is here to offset the space loss due to padding. -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_below="@id/lblCurrentBoon" />
 
             </RelativeLayout>
         </ScrollView>

@@ -486,7 +486,7 @@ public final class XPUtils {
     // As I said, enums are the single best thing in Java
     public enum Skill {
         // Closers
-        Oracle(Alignment.Closers, 5, "Ⱚ", "Oracle",
+        ORACLE(Alignment.Closers, 5, "Ⱚ", "Oracle",
                 "You see Letters from further than usual.",
                 "Sight increased by !%.",
                 new SkillWrapper() {
@@ -498,7 +498,7 @@ public final class XPUtils {
                         return (150.0f / 19.0f) + (level * slope);
                     }
                 }),
-        KeepersToll(Alignment.Closers, 25, "Ⱔ", "Keeper's Toll",
+        KEEPERS_GRACE(Alignment.Closers, 25, "Ⱔ", "Keeper's Grace",
                 "Burning a Letter at the Crematorium has a chance of generating 1 additional Ash.",
                 "Chance for extra Ash is !%.",
                 new SkillWrapper() {
@@ -508,11 +508,11 @@ public final class XPUtils {
                         return level * 0.4f;
                     }
                 }),
-        SacredWill(Alignment.Closers, 50, "Ⱋ", "Sacred Will",
+        SACRED_WILL(Alignment.Closers, 50, "Ⱋ", "Sacred Will",
                 "Oracle now increases your Grab radius as well.",
                 "",
                 null),
-        CommandingPresence(Alignment.Closers, 75, "Ⱉ", "Commanding Presence",
+        COMMANDING_PRESENCE(Alignment.Closers, 75, "Ⱉ", "Commanding Presence", // this skill is probably overpowered as duck
                 "Your Oracle benefits are doubled. Additionally, every time you collect a Letter, " +
                     "there is a slight chance a free copy of it will be added to your Inventory.",
                 "Extra Letter chance is !%.",
@@ -527,16 +527,16 @@ public final class XPUtils {
 
 
         // Openers
-        AshenSoul(Alignment.Openers, 5, "Ⱗ", "Ashen Soul",
+        ASHEN_SOUL(Alignment.Openers, 5, "Ⱗ", "Ashen Soul",
                 "Burning a Letter at the Crematorium generates 1 additional Ash.",
                 "",
                 null),
-        DarkLiaison(Alignment.Openers, 25, "Ⱑ", "Dark Liaison",
+        DUSTBECKON(Alignment.Openers, 25, "Ⱑ", "Dustbeckon",
                 "Permanently reduces the amount of Letters needed to gain an extra Ash by 1. This amount " +
                         "cannot go below 1.",
                 "",
                 null),
-        BeckonerOfAsh(Alignment.Openers, 50, "Ⱙ", "Beckoner of Ash",
+        SPIRE_AGENTS(Alignment.Openers, 50, "Ⱙ", "Spire Agents",
                 "Creating Letters at the Ashery is cheaper.",
                 "Ashery discount is !%.",
                 new SkillWrapper() {
@@ -548,7 +548,7 @@ public final class XPUtils {
                         return 15 + (level * slope);
                     }
                 }),
-        ShadowManipulator(Alignment.Openers, 75, "Ⱘ", "Shadow Manipulator",
+        TOLL_THE_SPIRE(Alignment.Openers, 75, "Ⱘ", "Toll the Spire",
                 "There is a chance that creating a Letter at the Ashery will cost you no Ash.",
                 "Chance for free Letter creation is !%.",
                 new SkillWrapper() {

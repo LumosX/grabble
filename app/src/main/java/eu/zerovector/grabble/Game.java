@@ -46,6 +46,7 @@ import eu.zerovector.grabble.Utils.GrabbleAPIException;
 import eu.zerovector.grabble.Utils.MathUtils;
 import eu.zerovector.grabble.Utils.RandomNameGenerator;
 
+import static android.util.Log.d;
 import static eu.zerovector.grabble.Network.SavePlayerData;
 
 // A static class that shall hold all core gameplay data and helper functions
@@ -419,7 +420,7 @@ public final class Game {
         int wordLen = 7; // We can just hardcode it, though this is bad practice
         int bestFoundSimilarity = -1;
         Word selectedWord = null;
-        while (iter.hasNext() || i < iterations) {
+        while (iter.hasNext() && i < iterations) {
             Word curWord = (Word)iter.next();
             //int wordLen = curWord.length(); // Use this for words of different lengths
             int[] curWordCounts = curWord.toInventory().getLetterCounts();
@@ -460,12 +461,13 @@ public final class Game {
                 currentPlayer.getInventory().removeLetter(let);
             }
         }
+        // Also must check again after we're done with the word
+        if (selectedWord.isComplete()) completedNewWord = true;
 
-        // If we were smart, we'd keep a stack of best-similarity words or whatever
-        if (completedNewWord) checkRequestNewWord(caller);
 
 
-                // Finally, propagate an UI update.
+
+                // Finally, propagate a UI update.
 
 
 
@@ -487,16 +489,16 @@ public final class Game {
 
         // If something about the player changed, force an UI update, plus other things
         // We're using one of these to notify the listeners of anything specific they need to be doing
-        final EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
+        EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);
         // And we'll need this one too - getting it before any letters have been added
-        final Word curWord = currentPlayer.getCurrentWord();
+        Word curWord = currentPlayer.getCurrentWord();
 
         Log.i("GAME", "Grabbing points. Current word is: " + curWord.toString());
 
         if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
-            Log.d("GAME", "GrabPoints is running on the UI thread");
+            d("GAME", "GrabPoints is running on the UI thread");
         }
-        else Log.d("GAME", "GrabPoints is running on SOME OTHER THREAD");
+        else d("GAME", "GrabPoints is running on SOME OTHER THREAD");
 
         for (Placemark curPoint : points) {
             Letter letter = curPoint.letter();
@@ -513,9 +515,9 @@ public final class Game {
             if (!result) continue;
 
             // Hook for the final Closers skill - try adding another letter if the random chance triggers
-            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), levelDetails.level(), XPUtils.Skill.CommandingPresence)) {
+            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), levelDetails.level(), XPUtils.Skill.COMMANDING_PRESENCE)) {
                 int t = new Random(System.currentTimeMillis()).nextInt(100);
-                if (t < XPUtils.Skill.CommandingPresence.getCurBonusMagnitude(levelDetails.level())) {
+                if (t < XPUtils.Skill.COMMANDING_PRESENCE.getCurBonusMagnitude(levelDetails.level())) {
                     currentPlayer.getInventory().addLetter(letter, perks.getInvCapacity());
                 }
             }
@@ -527,7 +529,7 @@ public final class Game {
                 currentPlayer.addAsh(1);
                 int letUntilExtraAsh = perks.getNumLettersForOneAsh();
                 // Check for the relevant Opener skill
-                if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), levelDetails.level(), XPUtils.Skill.DarkLiaison) &&
+                if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), levelDetails.level(), XPUtils.Skill.DUSTBECKON) &&
                     letUntilExtraAsh > 1) {
                         letUntilExtraAsh -= 1;
                 }
@@ -542,13 +544,25 @@ public final class Game {
             // If we've completed a word, grant the DESTROY value of the word as an Ash reward
             // (otherwise the player can just keep pumping words with a big enough balance, and break even)
             if (!loadingNewWord && curWord.isComplete()) {
+                // To not duck anything up, we need to put a loop in here.
                 updateCodes.add(UpdateUIListener.Code.WORD_COMPLETED);
                 // Load faction, set word as completed, save faction
                 FactionData currentFaction = Network.GetFactionData(caller, currentPlayer.getCurrentFactionName());
-                currentFaction.addCompletedWord(curWord);
-                Network.SaveFactionData(caller, currentFaction);
-                // Also notify anything that needs to know this happened
-                onWordCompleted(caller);
+                boolean canContinue = false;
+                do {
+                    currentFaction.addCompletedWord(curWord);
+                    Network.SaveFactionData(caller, currentFaction);
+                    // Also notify anything that needs to know this happened
+                    onWordCompleted(caller);
+                    curWord = currentPlayer.getCurrentWord(); // Update this reference (SLOPPY!)
+                    // OnWordCompleted returns a new word, already placed in curWord. It also tries
+                    // to complete as much of it as possible. If it's completed entirely, we need a NEW one.
+                    if (!curWord.isComplete()) canContinue = true;
+                    if (!canContinue) Log.d("GAME", "Newly-chosen word already completed; repeating");
+                    // Therefore, we need to loop until as many words as possible have been completed.
+                    // Yeah, this is very inefficient, I know.
+                }
+                while (!canContinue);
             }
 
             // And finally, if we've levelled up, grant the extra ash reward (if there is one)
@@ -610,14 +624,14 @@ public final class Game {
         // If no errors are necessary, DO THE WORK
         int amount = letter.getAshCreateValue();
         // Don't forget to hook into the relevant skills
-        if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.ShadowManipulator)) {
+        if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.TOLL_THE_SPIRE)) {
             int t = new Random(System.currentTimeMillis()).nextInt(100);
-            if (t < XPUtils.Skill.ShadowManipulator.getCurBonusMagnitude(dp.levelDetails().level())) {
+            if (t < XPUtils.Skill.TOLL_THE_SPIRE.getCurBonusMagnitude(dp.levelDetails().level())) {
                 amount = 0;
             }
         }
-        if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.BeckonerOfAsh)) {
-            float discount = XPUtils.Skill.ShadowManipulator.getCurBonusMagnitude(dp.levelDetails().level());
+        if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.SPIRE_AGENTS)) {
+            float discount = XPUtils.Skill.SPIRE_AGENTS.getCurBonusMagnitude(dp.levelDetails().level());
             amount = (int)((1.0f - discount) * (float)amount);
         }
         Game.currentPlayerData().removeAsh(amount);
@@ -648,12 +662,12 @@ public final class Game {
             XPUtils.LevelDetails det = XPUtils.getLevelDetailsForXP(currentPlayer.getXP());
 
             // Get the extra skill modifiers, if any
-            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), det.level(), XPUtils.Skill.AshenSoul)) {
+            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), det.level(), XPUtils.Skill.ASHEN_SOUL)) {
                 amount += 1;
             }
-            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), det.level(), XPUtils.Skill.KeepersToll)) {
+            if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), det.level(), XPUtils.Skill.KEEPERS_GRACE)) {
                 int t = new Random(System.currentTimeMillis()).nextInt(100);
-                if (t < XPUtils.Skill.KeepersToll.getCurBonusMagnitude(det.level())) {
+                if (t < XPUtils.Skill.KEEPERS_GRACE.getCurBonusMagnitude(det.level())) {
                     amount += 1;
                 }
             }
