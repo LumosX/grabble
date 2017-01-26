@@ -624,8 +624,10 @@ public final class Game {
         }
         if (XPUtils.LevelHasSkill(currentPlayer.getAlignment(), dp.levelDetails().level(), XPUtils.Skill.SPIRE_AGENTS)) {
             float discount = XPUtils.Skill.SPIRE_AGENTS.getCurBonusMagnitude(dp.levelDetails().level());
-            amount = (int)((1.0f - discount) * (float)amount);
+            amount = (int)Math.ceil((1.0f - 0.01f*discount) * (float)amount);
         }
+        // Again, make sure burning is at least equal to creating
+        amount = MathUtils.ClampInt(amount, letter.getAshDestroyValue() + 1, letter.getAshCreateValue());
         Game.currentPlayerData().removeAsh(amount);
 
         EnumSet<UpdateUIListener.Code> updateCodes = EnumSet.noneOf(UpdateUIListener.Code.class);

@@ -31,6 +31,7 @@ import eu.zerovector.grabble.Data.XPUtils;
 import eu.zerovector.grabble.Game;
 import eu.zerovector.grabble.R;
 import eu.zerovector.grabble.Utils.AnimUtils;
+import eu.zerovector.grabble.Utils.MathUtils;
 
 // A custom view to make setting up the Ashery and Crematorium easier
 public class LetterSelector extends RelativeLayout {
@@ -347,9 +348,10 @@ public class LetterSelector extends RelativeLayout {
 
             if (XPUtils.LevelHasSkill(playerTeam, det.level(), XPUtils.Skill.SPIRE_AGENTS)) {
                 float discount = XPUtils.Skill.SPIRE_AGENTS.getCurBonusMagnitude(det.level());
-                amount = (int)((1.0f - discount) * (float)amount);
+                amount = (int)Math.ceil((1.0f - 0.01f*discount) * (float)amount);
             }
-            return amount;
+            // Make sure we don't make letters cheaper to build than to burn
+            return MathUtils.ClampInt(amount, selectedLetter.getAshDestroyValue() + 1, selectedLetter.getAshCreateValue());
         }
         else {
             int amount = selectedLetter.getAshDestroyValue();
