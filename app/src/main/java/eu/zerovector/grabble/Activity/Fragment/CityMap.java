@@ -463,6 +463,11 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
 
         // Make sure to init the map if we've not already done so
         if (!mapDataInitialised) InitMapData();
+
+        // Refresh the executor service and force-restart location updates.
+        // Otherwise they'd turn off when the phone went to sleep, and wouldn't restart.
+        locChangedUpdateExec = Executors.newSingleThreadExecutor();
+        startLocationUpdates();
     }
 
 
