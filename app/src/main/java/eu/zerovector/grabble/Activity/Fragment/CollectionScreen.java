@@ -91,8 +91,8 @@ public class CollectionScreen extends Fragment implements UpdateUIListener {
         tblLetters = (TableLayout)view.findViewById(R.id.tblLetters);
         levelUpAnimRunning = false;
 
-        // debug
-        //Game.currentPlayerData().setXP(34700);
+        // DEBUG: Uncomment this to force XP to some value upon login. Good for looking at levels.
+        //Game.currentPlayerData().setXP(34700); // level 25
 
         // Link up to the Game class
         Game.addUIListener(this);

@@ -682,8 +682,10 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
         final LatLng currentCoords = MathUtils.LocationToLatLng(location);
 
         // InitMapData already requires the map data to have loaded, so mapSegmentData() shan't return null ever
-        int segmentRadius = modifiedPerks.getSightRange() / Game.MAP_SEGMENT_MIN_LENGTH;
-        segmentRadius = (segmentRadius > 0) ? segmentRadius : 0;
+        // Bugfix: At minimal radii and location inaccuracy, some dots were never polled.
+        // We bump up the radius by another segment just to be safe.
+        int segmentRadius = (modifiedPerks.getSightRange() / Game.MAP_SEGMENT_MIN_LENGTH) + 1;
+        segmentRadius = (segmentRadius > 1) ? segmentRadius : 1;
         final List<Integer> segmentsOfInterest = Game.mapSegmentData().computeSegmentAndNeighbours(currentCoords, segmentRadius);
 
         // In order NOT to do all this on the UI thread, we'll queue a background job. Gotta make use of that library, right?
@@ -713,29 +715,21 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
                             pointsToGrab.add(placemark);
                             // Notify points that it needs to be removed
                             icon = null;
-//                            // Now, kill the marker on the map
-//                            marker.remove();
-//                            // The point has been taken; remove all references to it, so we can't grab it again
-//                            iter.remove();
-
                         }
                         // If within SEEING distance instead, replace marker icon with correct one.
                         else if (dist <= playerData.traitSet().getSightRange()) {
                             // Grab the icon for the new letter. If it's a letter for OUR word, highlight it in gold!
                             // ... or don't, because the drawable -> bitmap -> descriptor process appears to be quite costly.
                             icon = BitmapDescriptorFactory.fromResource(placemark.letter().getMarkerIconResourceID(parentContext));
-//                            marker.setIcon(BitmapDescriptorFactory.fromResource(placemark.letter().getMarkerIconResourceID(parentContext)));
                         }
                         // All other points (too far even to see) should retain their unknown marker icon.
                         else {
                             icon = BitmapDescriptorFactory.fromResource(R.drawable.marker_letters_unknown);
-//                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_letters_unknown));
                         }
                     }
                     // Points outside of the relevant segments should also be properly cleared as unknown (just a safeguard)
                     else {
                         icon = BitmapDescriptorFactory.fromResource(R.drawable.marker_letters_unknown);
-//                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker_letters_unknown));
                     }
 
                     // Finally, update data
@@ -749,6 +743,7 @@ public class CityMap extends Fragment implements OnMapReadyCallback, GoogleApiCl
             public void onResult(List<Placemark> grabbedPoints) {
                 // However, we DO need to update the markers on the UI thread...
                 // And we need to cycle all this shit AGAIN
+                // it's inefficient as all duck, I know
                 Iterator iter = mapMarkers.entrySet().iterator();
                 while (iter.hasNext()) {
                     Pair<Marker, BitmapDescriptor> values = (Pair<Marker, BitmapDescriptor>)((Map.Entry)iter.next()).getValue();
