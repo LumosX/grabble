@@ -2,6 +2,8 @@
 
 This is an android game created by me as a part of my Bachelor's degree in computer science at the University of Edinburgh. One of the first complete projects I made by myself, as well as my first foray into android development, it has great sentimental value to me.
 
+To examine a better android game with a better report PDF, see my other university project, ["Coinz"](https://github.com/LumosX/coinz) (I didn't pick that name either)
+
 This repo serves to commemorate that, mostly so I can fondly look back at it; but perhaps an errant developer stumbling upon this in the future could steal some ideas from it.
 
 ### Details
