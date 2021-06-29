@@ -4,10 +4,10 @@ This is an android game created by me as a part of my Bachelor's degree in compu
 
 This repo serves to commemorate that, mostly so I can fondly look back at it; but perhaps an errant developer stumbling upon this in the future could steal some ideas from it.
 
-## Details
+### Details
 This is a game about walking around the area near to the main University of Edinburgh campus, and collecting "letters" that spawn in different locations. (Our professor was inspired by Pokemon Go.) These letters are then used to form words from a predefined dictionary. The coursework specs for this project mandated those requirements, as well as the use of the name "grabble".
 
-Because I'd be deeply unsatisfied with a result that is so barebones, my rendition of the project includes, as optional features I implemented because I alone wanted to do so:
+Because I'd be deeply unsatisfied with a result that is so barebones, my rendition of the project includes, as optional features I implemented solely because I alone wanted to do so:
 
 * Narrative inspired by Roger Zelazny's "A Night in the Lonesome October" and motivating and tying into the base mechanics, featuring two competing teams: the Openers, seeking to complete their *Codex Maleficarum* and destroy the world; and the Closers, wishing to find all words for their *Sacred Tome* and preserve the world.
 * A currency system allowing collected letters to be transformed to "Ash", and then repurposed to create other letters the player wants or needs.
@@ -19,7 +19,19 @@ Because I'd be deeply unsatisfied with a result that is so barebones, my renditi
 If interested, have a peek at the PDF folder. The game is likely unplayable these days (by virtue of not having a placemark list to download), but I imagine perusing the code might be an amusing exercise. `XPUtils` would be a recommended starting point, as it contains most of the interesting tricks that were pleasurable to implement.
 
 
-### Skills
+### Screenshots
+<p>
+    <a href="https://user-images.githubusercontent.com/17273782/123873866-19888600-d92f-11eb-8e8b-ade3cd2baa82.png"><img src="https://user-images.githubusercontent.com/17273782/123873866-19888600-d92f-11eb-8e8b-ade3cd2baa82.png" width="18%"></a>&nbsp;
+    <a href="https://user-images.githubusercontent.com/17273782/123873873-1c837680-d92f-11eb-8908-b8d09e3c628c.png"><img src="https://user-images.githubusercontent.com/17273782/123873873-1c837680-d92f-11eb-8908-b8d09e3c628c.png" width="18%"></a>&nbsp;
+    <a href="https://user-images.githubusercontent.com/17273782/123873881-1ee5d080-d92f-11eb-83b3-9dbf01b715e4.png"><img src="https://user-images.githubusercontent.com/17273782/123873881-1ee5d080-d92f-11eb-83b3-9dbf01b715e4.png" width="18%"></a>&nbsp;
+    <a href="https://user-images.githubusercontent.com/17273782/123873885-20af9400-d92f-11eb-893e-dbdfbd8bf606.png"><img src="https://user-images.githubusercontent.com/17273782/123873885-20af9400-d92f-11eb-893e-dbdfbd8bf606.png" width="18%"></a>&nbsp;
+    <a href="https://user-images.githubusercontent.com/17273782/123873890-2311ee00-d92f-11eb-962b-8d64fac7fa89.png"><img src="https://user-images.githubusercontent.com/17273782/123873890-2311ee00-d92f-11eb-962b-8d64fac7fa89.png" width="18%"></a>
+    </div>
+</p>
+
+
+
+### Skills (level-up benefits)
 I'll put this here just because it's not documented anywhere else. Every game needs to have a manual, even dead ones.
 
 Levelling up also improves sight range, grab range, inventory space, and the "market conversion rates" for letters, for both teams.
